@@ -15,30 +15,61 @@ root.title("Youtube-dl")
 root.minsize(720,360)
 console_text = StringVar(value="")
 
-def exec(link, *options):
+LOUT = []
+
+def _readline(obj, newline = (b"\n", b"\r")):
+    l = []
+    while True:
+        c = obj.read(1)
+        if c in newline:
+            l.append(b"\n")
+            break
+        elif c:
+            l.append(c)
+        else:
+            break
+    return b"".join(l)
+
+def read_output(p, rewrite=False):
+    proc_stdout = p.stdout
+    while True:
+        try:
+            text = _readline(proc_stdout)
+            if text:
+                print(text)
+                text = text.decode("cp1251")
+                if rewrite:
+                    console_text.set(text)
+                else:
+                    console_text.set("".join([console_text.get(), text]))
+            else:
+                break
+        except ValueError:
+            break
+    
+    console_text.set("".join([console_text.get(), ".................END"]))
+
+def exec(link, *options, rewrite_output=False):
     l = list(options)
     l.insert(0, youtube_dl_app)
     l.append(link)
     proc = subprocess.Popen(l, stdout=subprocess.PIPE)
-    outs, errs = proc.communicate()
-    return outs, errs
+    t = Thread(target=read_output, args=(proc, rewrite_output))
+    t.start()
 
 def download(link, options_str):
     options = options_str.split(" ") if options_str else []
     options+=["-o", dl_path]
-    outs, errs = exec(link, *options)
+    exec(link, *options, rewrite_output=True)
 
 def get_info(link):
-    outs, errs = exec(link, "-F")
-    return outs, errs
+    exec(link, "-F")
 
 def fill_console(text):
     console_text.set(text)
 
 def fill_with_info(link):
-    outs, _ = get_info(link)
-    if outs:
-        fill_console(outs.decode())
+    get_info(link)
 
 def start_gui():
     #labels
@@ -59,7 +90,8 @@ def start_gui():
 
     entOptions = Entry(root, width=100)
     entOptions.grid(row=1,column=1, sticky="W")
-    
+    entOptions.insert(0, "-f 399+140")
+
     #buttons
     btnDownload = Button(root, text="Download", command = lambda: download(entDwnLink.get(), entOptions.get()))
     btnDownload.grid(row=100,column=0)
