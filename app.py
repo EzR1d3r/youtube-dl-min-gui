@@ -2,7 +2,8 @@ import subprocess
 import os
 from threading import Thread
 
-from tkinter import Tk, Label, Button, Entry, StringVar, LEFT
+from tkinter import Tk, Label, Button, Entry, StringVar, Text
+from tkinter import LEFT
 
 title_scheme = "%(title)s.%(ext)s"
 youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
@@ -13,9 +14,7 @@ dl_path = os.path.expanduser( rel_dl_path )
 root = Tk()
 root.title("Youtube-dl")
 root.minsize(720,360)
-console_text = StringVar(value="")
-
-LOUT = []
+console_text = StringVar(value=";dlsfgk;sdlfkg;lsdfg;\nasdfasdfasdfasd\nopipaoeripasor")
 
 def _readline(obj, newline = (b"\n", b"\r")):
     l = []
@@ -36,7 +35,6 @@ def read_output(p, rewrite=False):
         try:
             text = _readline(proc_stdout)
             if text:
-                print(text)
                 text = text.decode("cp1251")
                 if rewrite:
                     console_text.set(text)
@@ -47,7 +45,7 @@ def read_output(p, rewrite=False):
         except ValueError:
             break
     
-    console_text.set("".join([console_text.get(), ".................END"]))
+    console_text.set("".join([console_text.get(), "---------------END---------------"]))
 
 def exec(link, *options, rewrite_output=False):
     l = list(options)
@@ -77,29 +75,36 @@ def start_gui():
     lbLink.grid(row=0,column=0,sticky="W",pady=10, padx=10)
 
     lbOptions = Label(root, text="Options: ", justify=LEFT)
-    lbOptions.grid(row=1,column=0,sticky="W",pady=10, padx=10)
+    lbOptions.grid(row=1,column=0, sticky="W", pady=10, padx=10)
 
     lbInfo = Label(textvariable=console_text, bg="black", fg="#2bfe72", justify=LEFT, width=100)
-    lbInfo.grid(row=101, column=0, columnspan=2, sticky="W", pady=10, padx=10)
+    lbInfo.grid(row=101, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
 
     #entrys
-    entDwnLink = Entry(root, width=100)
-    entDwnLink.grid(row=0,column=1, sticky="W")
+    entDwnLink = Entry(root)
+    entDwnLink.grid(row=0, column=1, sticky="WE", columnspan=2, pady=10, padx=10)
     entDwnLink.bind("<Button-3>", lambda x: entDwnLink.insert(0,entDwnLink.selection_get(selection='CLIPBOARD') ))
     entDwnLink.insert(0, "https://www.youtube.com/watch?v=S6ygE226h-0")
 
     entOptions = Entry(root, width=100)
-    entOptions.grid(row=1,column=1, sticky="W")
+    entOptions.grid(row=1,column=1, sticky="WE", columnspan=2, pady=10, padx=10)
     entOptions.insert(0, "-f 399+140")
 
     #buttons
-    btnDownload = Button(root, text="Download", command = lambda: download(entDwnLink.get(), entOptions.get()))
-    btnDownload.grid(row=100,column=0)
+    btnDownload = Button(root, text="Download", width=20, command = lambda: download(entDwnLink.get(), entOptions.get()))
+    btnDownload.grid(row=100, column=1, pady=10, padx=10, sticky="E")
 
-    btnInfo = Button(root, text="Info", command = lambda: fill_with_info(entDwnLink.get()))
-    btnInfo.grid(row=100,column=1)
+    btnInfo = Button(root, text="Info", width=20, command = lambda: fill_with_info(entDwnLink.get()))
+    btnInfo.grid(row=100, column=2, pady=10, padx=10, sticky="E")
 
-    #loop
+    #text
+    # txtInfo = Text()
+    # txtInfo.grid(row=102, column=0, columnspan=2, sticky="WNES", pady=10, padx=10)
+
+    #root
+    root.columnconfigure(0, weight=0, minsize=100)
+    root.columnconfigure(1, weight=10, minsize=300)
+
     root.mainloop()
 
 if __name__ == "__main__":
