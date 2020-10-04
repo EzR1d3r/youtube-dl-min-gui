@@ -5,7 +5,8 @@ from threading import Thread
 from tkinter import Tk, Label, Button, Entry, StringVar, Text
 from tkinter import LEFT, END
 
-START = 1.0 #start index for text item
+START = "1.0" #start index for text item
+LAST_LINE = ("end-1l", END)
 
 title_scheme = "%(title)s.%(ext)s"
 youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
@@ -22,25 +23,22 @@ def _readline(obj, newline = (b"\n", b"\r")):
     l = []
     while True:
         c = obj.read(1)
-        if c in newline:
-            l.append(b"\n")
-            break
-        elif c:
+        if c:
             l.append(c)
-        else:
+        if not c or c in newline:
             break
     return b"".join(l)
 
-def read_output(p: subprocess.Popen, rewrite: bool = False):
+def read_output(p: subprocess.Popen):
     proc_stdout = p.stdout
     while True:
         try:
             text = _readline(proc_stdout)
             if text:
                 text = text.decode("cp1251")
-                if rewrite:
-                    clear_and_fill_console(text)
-                else:
+                if text.endswith("\r"):
+                    replace_last_console_line(text)
+                elif text.endswith("\n"):
                     append_console_line(text)
             else:
                 break
@@ -55,30 +53,37 @@ def append_console_line(text_line: str):
 def clear_and_fill_console(text):
     _set_text_item_text(txtConsole, text)
 
+def replace_last_console_line(text_line):
+    _replace_text_item_last_line(txtConsole, text_line)
+
 def _append_text_item_text_line(text_item: Text, text_line: str):
-    text = text_item.get(START, END)
-    text = "\n".join([text.rstrip(), text_line])
-    text_item.delete(START, END)
-    text_item.insert(START, text)
+    text_item.insert(END, text_line)
+
+def _replace_text_item_last_line(text_item: Text, text_line: str):
+    txtConsole.delete(*LAST_LINE)
+    text_line = "\n" + text_line
+    text_item.insert(END, text_line)
 
 def _set_text_item_text(text_item: Text, text: str):
     text_item.delete(START, END)
     text_item.insert(START, text)
 
-def exec(link, *options, rewrite_output=False):
+def exec(link, *options):
     l = list(options)
     l.insert(0, youtube_dl_app)
     l.append(link)
     proc = subprocess.Popen(l, stdout=subprocess.PIPE)
-    t = Thread(target=read_output, args=(proc, rewrite_output))
+    t = Thread(target=read_output, args=(proc,))
     t.start()
 
 def download(link, options_str):
     options = options_str.split(" ") if options_str else []
     options+=["-o", dl_path]
-    exec(link, *options, rewrite_output=True)
+    append_console_line("\n")
+    exec(link, *options)
 
 def get_info(link):
+    append_console_line("\n")
     exec(link, "-F")
 
 def fill_with_info(link):
