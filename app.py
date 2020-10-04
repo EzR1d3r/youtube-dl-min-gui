@@ -7,6 +7,7 @@ from tkinter import LEFT, END
 
 START = "1.0" #start index for text item
 LAST_LINE = ("end-1l", END)
+PENULTIMATE_LINE = ("end-2l", "end-1l")
 
 title_scheme = "%(title)s.%(ext)s"
 youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
@@ -47,8 +48,20 @@ def read_output(p: subprocess.Popen):
     
     append_console_line("---------------END---------------")
 
+def _post_format(text_item: Text, text_line, contains=None):
+    contains = contains if contains else {}
+    for sub_str, color in contains.items():
+        if _check_substrings(text_line, sub_str):
+            text_item.tag_add(sub_str, *PENULTIMATE_LINE)
+            text_item.tag_config(sub_str, foreground=color)
+
+def _check_substrings(inspected_str: str, subs):
+    subs = subs.split("+")
+    return all( [(s in inspected_str) for s in subs] )
+
 def append_console_line(text_line: str):
     _append_text_item_text_line(txtConsole, text_line)
+    _post_format(txtConsole, text_line, contains={"mp4+1080p":"cyan", "m4a":"magenta"})
 
 def clear_and_fill_console(text):
     _set_text_item_text(txtConsole, text)
