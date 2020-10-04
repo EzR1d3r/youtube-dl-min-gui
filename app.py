@@ -3,7 +3,9 @@ import os
 from threading import Thread
 
 from tkinter import Tk, Label, Button, Entry, StringVar, Text
-from tkinter import LEFT
+from tkinter import LEFT, END
+
+START = 1.0 #start index for text item
 
 title_scheme = "%(title)s.%(ext)s"
 youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
@@ -14,7 +16,7 @@ dl_path = os.path.expanduser( rel_dl_path )
 root = Tk()
 root.title("Youtube-dl")
 root.minsize(720,360)
-console_text = StringVar(value=";dlsfgk;sdlfkg;lsdfg;\nasdfasdfasdfasd\nopipaoeripasor")
+txtConsole = Text(bg="black", fg="#2bfe72")
 
 def _readline(obj, newline = (b"\n", b"\r")):
     l = []
@@ -29,7 +31,7 @@ def _readline(obj, newline = (b"\n", b"\r")):
             break
     return b"".join(l)
 
-def read_output(p, rewrite=False):
+def read_output(p: subprocess.Popen, rewrite: bool = False):
     proc_stdout = p.stdout
     while True:
         try:
@@ -37,15 +39,31 @@ def read_output(p, rewrite=False):
             if text:
                 text = text.decode("cp1251")
                 if rewrite:
-                    console_text.set(text)
+                    clear_and_fill_console(text)
                 else:
-                    console_text.set("".join([console_text.get(), text]))
+                    append_console_line(text)
             else:
                 break
         except ValueError:
             break
     
-    console_text.set("".join([console_text.get(), "---------------END---------------"]))
+    append_console_line("---------------END---------------")
+
+def append_console_line(text_line: str):
+    _append_text_item_text_line(txtConsole, text_line)
+
+def clear_and_fill_console(text):
+    _set_text_item_text(txtConsole, text)
+
+def _append_text_item_text_line(text_item: Text, text_line: str):
+    text = text_item.get(START, END)
+    text = "\n".join([text.rstrip(), text_line])
+    text_item.delete(START, END)
+    text_item.insert(START, text)
+
+def _set_text_item_text(text_item: Text, text: str):
+    text_item.delete(START, END)
+    text_item.insert(START, text)
 
 def exec(link, *options, rewrite_output=False):
     l = list(options)
@@ -63,9 +81,6 @@ def download(link, options_str):
 def get_info(link):
     exec(link, "-F")
 
-def fill_console(text):
-    console_text.set(text)
-
 def fill_with_info(link):
     get_info(link)
 
@@ -76,9 +91,6 @@ def start_gui():
 
     lbOptions = Label(root, text="Options: ", justify=LEFT)
     lbOptions.grid(row=1,column=0, sticky="W", pady=10, padx=10)
-
-    lbInfo = Label(textvariable=console_text, bg="black", fg="#2bfe72", justify=LEFT, width=100)
-    lbInfo.grid(row=101, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
 
     #entrys
     entDwnLink = Entry(root)
@@ -97,13 +109,13 @@ def start_gui():
     btnInfo = Button(root, text="Info", width=20, command = lambda: fill_with_info(entDwnLink.get()))
     btnInfo.grid(row=100, column=2, pady=10, padx=10, sticky="E")
 
-    #text
-    # txtInfo = Text()
-    # txtInfo.grid(row=102, column=0, columnspan=2, sticky="WNES", pady=10, padx=10)
+    # text
+    txtConsole.grid(row=102, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
 
     #root
     root.columnconfigure(0, weight=0, minsize=100)
     root.columnconfigure(1, weight=10, minsize=300)
+    root.rowconfigure(102, weight=100)
 
     root.mainloop()
 
