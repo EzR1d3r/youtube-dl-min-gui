@@ -8,8 +8,8 @@ from tkinter import LEFT, END
 import utils as ut
 
 title_scheme = "%(title)s.%(ext)s"
-rel_dl_path = os.path.join("~", "Downloads", "youtube-downloads", title_scheme)
-dl_path = os.path.expanduser( rel_dl_path )
+rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
+dl_dir = os.path.expanduser( rel_dl_dir )
 
 class MainWindow:
     def __init__(self):
@@ -26,28 +26,45 @@ class MainWindow:
         self.lbOptions = Label(self.root, text="Options: ", justify=LEFT)
         self.lbOptions.grid(row=1,column=0, sticky="W", pady=10, padx=10)
 
+        self.lbDownloadFolder = Label(self.root, text="Save folder: ", justify=LEFT)
+        self.lbDownloadFolder.grid(row=2,column=0, sticky="W", pady=10, padx=10)
+
+        self.lbTitleSheme = Label(self.root, text="Title sheme: ", justify=LEFT)
+        self.lbTitleSheme.grid(row=2,column=2, sticky="W", pady=10, padx=10)
+
         #entrys
         self.entDwnLink = Entry(self.root)
-        self.entDwnLink.grid(row=0, column=1, sticky="WE", columnspan=2, pady=10, padx=10)
+        self.entDwnLink.grid(row=0, column=1, sticky="WE", columnspan=4, pady=10, padx=10)
         self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=S6ygE226h-0")
 
         self.entOptions = Entry(self.root, width=100)
-        self.entOptions.grid(row=1,column=1, sticky="WE", columnspan=2, pady=10, padx=10)
+        self.entOptions.grid(row=1,column=1, sticky="WE", columnspan=4, pady=10, padx=10)
         self.entOptions.insert(0, "-f 399+140")
+
+        self.entDownloadFolder = Entry(self.root, width=100)
+        self.entDownloadFolder.grid(row=2,column=1, sticky="WE", columnspan=1, pady=10, padx=10)
+        self.entDownloadFolder.insert(0, dl_dir)
+
+        self.entTitleSheme = Entry(self.root, width=100)
+        self.entTitleSheme.grid(row=2,column=3, sticky="WE", columnspan=2, pady=10, padx=10)
+        self.entTitleSheme.insert(0, title_scheme)
 
         #buttons
         self.btnDownload = Button(self.root, text="Download", width=20)
-        self.btnDownload.grid(row=100, column=1, pady=10, padx=10, sticky="E")
+        self.btnDownload.grid(row=100, column=3, pady=10, padx=10, sticky="E")
 
         self.btnInfo = Button(self.root, text="Info", width=20)
-        self.btnInfo.grid(row=100, column=2, pady=10, padx=10, sticky="E")
+        self.btnInfo.grid(row=100, column=4, pady=10, padx=10, sticky="E")
 
         # text
-        self.txtConsole.grid(row=102, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
+        self.txtConsole.grid(row=102, column=0, columnspan=5, sticky="WNES", pady=10, padx=10)
 
         #root
         self.root.columnconfigure(0, weight=0, minsize=100)
-        self.root.columnconfigure(1, weight=10, minsize=300)
+        self.root.columnconfigure(1, weight=20, minsize=200)
+        self.root.columnconfigure(2, weight=0, minsize=50)
+        self.root.columnconfigure(3, weight=10, minsize=100)
+        # self.root.columnconfigure(4, weight=10, minsize=100)
         self.root.rowconfigure(102, weight=100)
 
         self.bind_gui()
@@ -61,6 +78,7 @@ class MainWindow:
         self.root.mainloop()
 
     def download(self, link, options_str):
+        dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
         options = options_str.split(" ") if options_str else []
         options+=["-o", dl_path]
         proc = ut.exec_youtube_dl(link, *options)
