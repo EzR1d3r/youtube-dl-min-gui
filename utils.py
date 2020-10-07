@@ -1,4 +1,6 @@
 import os
+import sys
+import re
 import subprocess
 from threading import Thread
 
@@ -10,6 +12,8 @@ LAST_LINE = ("end-1l", END)
 PENULTIMATE_LINE = ("end-2l", "end-1l")
 
 youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
+enter_point_fname = os.path.realpath(sys.argv[0])
+app_root_dir = os.path.dirname(enter_point_fname)
 
 #gui utils
 def _post_format(text_item: Text, text_line, contains=None):
@@ -35,6 +39,17 @@ def _set_text_item_text(text_item: Text, text: str):
     text_item.delete(START, END)
     text_item.insert(START, text)
 
+def parse_colors(color_config: str):
+    try:
+        opt = re.split(", |,| ", color_config)
+        opt = [ part for part in opt if part ]
+        opt = dict(tuple( re.split(":| :|: ", part) ) for part in opt)
+    except ValueError:
+        opt = {}
+
+    return opt
+
+#utils
 def exec_youtube_dl(link, *options) -> subprocess.Popen:
     l = list(options)
     l.insert(0, youtube_dl_app)
@@ -44,7 +59,6 @@ def exec_youtube_dl(link, *options) -> subprocess.Popen:
 def exec_get_info(link) -> subprocess.Popen:
     return exec_youtube_dl(link, "-F")
 
-#utils
 def _readline(obj, newline = (b"\n", b"\r")):
     l = []
     while True:

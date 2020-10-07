@@ -4,8 +4,10 @@ import os
 
 from tkinter import Tk, Label, Button, Entry, StringVar, Text
 from tkinter import LEFT, END
+from tkinter import messagebox
 
 import utils as ut
+from settings import Settings
 
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
@@ -73,6 +75,8 @@ class MainWindow:
         self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection='CLIPBOARD') ))
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
+        
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def mainloop(self):
         self.root.mainloop()
@@ -92,6 +96,10 @@ class MainWindow:
         #read youtube-dl output and redirect to the console
         t = Thread(target=ut.read_output, args=(proc,), kwargs={"out_append":self.append_console_line, "out_replace":self.replace_last_console_line})
         t.start()
+
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.root.destroy()
 
     #work with console text
     def append_console_line(self, text_line: str):
