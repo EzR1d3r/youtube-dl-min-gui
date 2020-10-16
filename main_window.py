@@ -7,7 +7,7 @@ from tkinter import LEFT, END
 from tkinter import messagebox
 
 import utils as ut
-from settings import Settings
+from settings import load_settings, save_settings
 
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
@@ -15,9 +15,11 @@ dl_dir = os.path.expanduser( rel_dl_dir )
 
 class MainWindow:
     def __init__(self):
+        self.settings = load_settings()
+
         #tk gui root
         self.root = Tk()
-        self.root.title("Youtube-dl")
+        self.root.title("MinGui Youtube-dl")
         self.root.minsize(720,360)
         self.txtConsole = Text(bg="black", fg="#2bfe72")
 
@@ -41,11 +43,11 @@ class MainWindow:
 
         self.entOptions = Entry(self.root, width=100)
         self.entOptions.grid(row=1,column=1, sticky="WE", columnspan=4, pady=10, padx=10)
-        self.entOptions.insert(0, "-f 399+140")
+        self.entOptions.insert(0, self.settings.options)
 
         self.entDownloadFolder = Entry(self.root, width=100)
         self.entDownloadFolder.grid(row=2,column=1, sticky="WE", columnspan=1, pady=10, padx=10)
-        self.entDownloadFolder.insert(0, dl_dir)
+        self.entDownloadFolder.insert(0, self.settings.download_dir)
 
         self.entTitleSheme = Entry(self.root, width=100)
         self.entTitleSheme.grid(row=2,column=3, sticky="WE", columnspan=2, pady=10, padx=10)
@@ -55,7 +57,7 @@ class MainWindow:
         self.btnDownload = Button(self.root, text="Download", width=20)
         self.btnDownload.grid(row=100, column=3, pady=10, padx=10, sticky="E")
 
-        self.btnInfo = Button(self.root, text="Info", width=20)
+        self.btnInfo = Button(self.root, text="Link Info", width=20)
         self.btnInfo.grid(row=100, column=4, pady=10, padx=10, sticky="E")
 
         # text
