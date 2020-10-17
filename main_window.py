@@ -9,6 +9,8 @@ from tkinter import messagebox
 import utils as ut
 from settings import load_settings, save_settings
 
+app_version = "1.0.0"
+
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
 dl_dir = os.path.expanduser( rel_dl_dir )
@@ -92,6 +94,16 @@ class MainWindow:
         self.root.rowconfigure(102, weight=100)
 
         self.bind_gui()
+        self.show_app_info()
+
+    def show_app_info(self):
+        self.append_console_line(f"MinGui Youtube-dl v{app_version} (c) Voronezh Statics\n")
+        self.append_console_line("Youtube-dl version:\n")
+
+        proc = ut.exec_youtube_dl("", "--version")
+        self.__redirect_out(proc)
+        proc = ut.exec_youtube_dl("", "--help")
+        self.__redirect_out(proc)
 
     def bind_gui(self):
         self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection='CLIPBOARD') ))
