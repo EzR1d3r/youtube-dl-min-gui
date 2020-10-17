@@ -40,10 +40,15 @@ def _set_text_item_text(text_item: Text, text: str):
     text_item.insert(START, text)
 
 def parse_colors(color_config: str):
+    """
+    Parse string which contains data for coloring console strings.
+    Example 'mp4+1080p:cyan, m4a:magenta' --> {"mp4+1080p":"cyan", "m4a":"magenta"}
+    """
     try:
-        opt = re.split(", |,| ", color_config)
+        opt = re.split(", |,| ,", color_config)
         opt = [ part for part in opt if part ]
         opt = dict(tuple( re.split(":| :|: ", part) ) for part in opt)
+        opt = { k.strip():v.strip() for k,v in opt.items() }
     except ValueError:
         opt = {}
 

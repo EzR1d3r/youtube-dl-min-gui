@@ -126,7 +126,8 @@ class MainWindow:
     #work with console text
     def append_console_line(self, text_line: str):
         ut._append_text_item_text_line(self.txtConsole, text_line)
-        ut._post_format(self.txtConsole, text_line, contains={"mp4+1080p":"cyan", "m4a":"magenta"})
+        contains = ut.parse_colors(self.entColors.get())
+        ut._post_format(self.txtConsole, text_line, contains=contains)
 
     def clear_and_fill_console(self, text):
         ut._set_text_item_text(self.txtConsole, text)
