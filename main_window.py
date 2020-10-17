@@ -2,7 +2,7 @@ from threading import Thread
 import subprocess
 import os
 
-from tkinter import Tk, Label, Button, Entry, StringVar, Text
+from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame
 from tkinter import LEFT, END
 from tkinter import messagebox
 
@@ -12,6 +12,7 @@ from settings import load_settings, save_settings
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
 dl_dir = os.path.expanduser( rel_dl_dir )
+blocks_color = "light grey"
 
 class MainWindow:
     def __init__(self):
@@ -23,51 +24,70 @@ class MainWindow:
         self.root.minsize(720,360)
         self.txtConsole = Text(bg="black", fg="#2bfe72")
 
-        #labels
+        #link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
         self.lbLink.grid(row=0,column=0,sticky="W",pady=10, padx=10)
 
-        self.lbOptions = Label(self.root, text="Options: ", justify=LEFT)
-        self.lbOptions.grid(row=1,column=0, sticky="W", pady=10, padx=10)
-
-        self.lbDownloadFolder = Label(self.root, text="Save folder: ", justify=LEFT)
-        self.lbDownloadFolder.grid(row=2,column=0, sticky="W", pady=10, padx=10)
-
-        self.lbTitleSheme = Label(self.root, text="Title sheme: ", justify=LEFT)
-        self.lbTitleSheme.grid(row=2,column=2, sticky="W", pady=10, padx=10)
-
-        #entrys
         self.entDwnLink = Entry(self.root)
-        self.entDwnLink.grid(row=0, column=1, sticky="WE", columnspan=4, pady=10, padx=10)
+        self.entDwnLink.grid(row=0, column=1, sticky="WE", pady=10, padx=10)
         self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=S6ygE226h-0")
 
-        self.entOptions = Entry(self.root, width=100)
-        self.entOptions.grid(row=1,column=1, sticky="WE", columnspan=4, pady=10, padx=10)
-        self.entOptions.insert(0, self.settings.options)
+        #Download block
+        self.fmDLBlock = Frame(bg=blocks_color)
+        self.fmDLBlock.grid(row=1, column=0, sticky="WNES", columnspan=2, pady=10, padx=10)
 
-        self.entDownloadFolder = Entry(self.root, width=100)
-        self.entDownloadFolder.grid(row=2,column=1, sticky="WE", columnspan=1, pady=10, padx=10)
+        self.lbDownloadFolder  = Label(self.fmDLBlock, text="Save folder: ", bg=blocks_color, justify=LEFT)
+        self.entDownloadFolder = Entry(self.fmDLBlock)
+        self.lbOptions         = Label(self.fmDLBlock, text="Options: ", bg=blocks_color, justify=LEFT)
+        self.entOptions        = Entry(self.fmDLBlock)
+        self.lbTitleSheme      = Label(self.fmDLBlock, text="Title sheme: ", bg=blocks_color, justify=LEFT)
+        self.entTitleSheme     = Entry(self.fmDLBlock)
+        self.btnDownload       = Button(self.fmDLBlock, text="Download", bg="light green", width=20)
+
+        self.lbDownloadFolder .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
+        self.entDownloadFolder.grid(row=0, column=1, sticky="WE", pady=10, padx=10, columnspan=4)
+        
+        self.lbOptions        .grid(row=1, column=0, sticky="W",  pady=10, padx=10)
+        self.entOptions       .grid(row=1, column=1, sticky="WE", pady=10, padx=10)
+        self.lbTitleSheme     .grid(row=1, column=2, sticky="W",  pady=10, padx=10)
+        self.entTitleSheme    .grid(row=1, column=4, sticky="WE", pady=10, padx=10)
+        
+        self.btnDownload      .grid(row=2, column=4, sticky="E",  pady=10, padx=10)
+
+        self.fmDLBlock.columnconfigure(0, weight=0, minsize=50)
+        self.fmDLBlock.columnconfigure(1, weight=20, minsize=100)
+        self.fmDLBlock.columnconfigure(2, weight=0, minsize=50)
+        self.fmDLBlock.columnconfigure(4, weight=20, minsize=100)
+
         self.entDownloadFolder.insert(0, self.settings.download_dir)
-
-        self.entTitleSheme = Entry(self.root, width=100)
-        self.entTitleSheme.grid(row=2,column=3, sticky="WE", columnspan=2, pady=10, padx=10)
+        self.entOptions.insert(0, self.settings.options)
         self.entTitleSheme.insert(0, title_scheme)
 
-        #buttons
-        self.btnDownload = Button(self.root, text="Download", width=20)
-        self.btnDownload.grid(row=100, column=3, pady=10, padx=10, sticky="E")
+        #Link Info block
+        self.fmInfoBlock = Frame(bg=blocks_color)
+        self.fmInfoBlock.grid(row=1,column=2, sticky="WNES", pady=10, padx=10)
+        
+        self.lbColors  = Label(self.fmInfoBlock, text="Colors: ", bg=blocks_color, justify=LEFT)
+        self.entColors = Entry(self.fmInfoBlock)
+        self.btnInfo   = Button(self.fmInfoBlock, text="Link Info", width=20)
 
-        self.btnInfo = Button(self.root, text="Link Info", width=20)
-        self.btnInfo.grid(row=100, column=4, pady=10, padx=10, sticky="E")
+        self.lbColors  .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
+        self.entColors .grid(row=0, column=1, sticky="WE", pady=10, padx=10)
+        self.btnInfo   .grid(row=1, column=1, pady=10, padx=10, sticky="E")
 
-        # text
-        self.txtConsole.grid(row=102, column=0, columnspan=5, sticky="WNES", pady=10, padx=10)
+        self.fmInfoBlock.columnconfigure(0, weight=0, minsize=50)
+        self.fmInfoBlock.columnconfigure(1, weight=20, minsize=150)
 
-        #root
+        self.entColors.insert(0, self.settings.colors)
+
+        #Console
+        self.txtConsole.grid(row=102, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
+
+        #Root
         self.root.columnconfigure(0, weight=0, minsize=100)
-        self.root.columnconfigure(1, weight=20, minsize=200)
-        self.root.columnconfigure(2, weight=0, minsize=50)
-        self.root.columnconfigure(3, weight=10, minsize=100)
+        self.root.columnconfigure(1, weight=20, minsize=350)
+        self.root.columnconfigure(2, weight=10, minsize=250)
+        # self.root.columnconfigure(3, weight=10, minsize=100)
         # self.root.columnconfigure(4, weight=10, minsize=100)
         self.root.rowconfigure(102, weight=100)
 
@@ -78,7 +98,7 @@ class MainWindow:
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
         
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def mainloop(self):
         self.root.mainloop()

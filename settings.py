@@ -38,7 +38,7 @@ def save_settings(settings_obj: Settings, fname: str) -> None:
     with open(fname, "w") as file:
         json.dump(_json, file, indent=4)
 
-def load_settings(fname: str = settings_fname) -> None:
+def load_settings(fname: str = settings_fname) -> Settings:
     try:
         with open(fname, "r") as file:
             _json = json.load(file)
