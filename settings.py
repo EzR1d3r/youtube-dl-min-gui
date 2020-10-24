@@ -32,8 +32,12 @@ class Settings:
     file_title: str = "%(title)s.%(ext)s"
     options: str = "-f 399+140"
     colors: str = "mp4+1080p:cyan, m4a:magenta"
+    font_name: str = "courier"
+    font_size: int = 12
+    console_bg: str = "black"
+    console_fg: str = "#2bfe72"
 
-def save_settings(settings_obj: Settings, fname: str) -> None:
+def save_settings(settings_obj: Settings, fname: str = settings_fname) -> None:
     _json = asdict(settings_obj)
     with open(fname, "w") as file:
         json.dump(_json, file, indent=4)

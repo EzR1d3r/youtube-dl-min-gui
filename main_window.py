@@ -19,12 +19,17 @@ blocks_color = "light grey"
 class MainWindow:
     def __init__(self):
         self.settings = load_settings()
+        save_settings(self.settings)
 
         #tk gui root
         self.root = Tk()
         self.root.title("MinGui Youtube-dl")
         self.root.minsize(720,360)
-        self.txtConsole = Text(bg="black", fg="#2bfe72")
+        self.txtConsole = Text(
+            bg= self.settings.console_bg,
+            fg= self.settings.console_fg,
+            font= (self.settings.font_name, self.settings.font_size)
+        )
 
         #link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
