@@ -2,8 +2,8 @@ from threading import Thread
 import subprocess
 import os
 
-from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame
-from tkinter import LEFT, END
+from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
+from tkinter import LEFT, END, Y
 from tkinter import messagebox
 
 import utils as ut
@@ -25,11 +25,6 @@ class MainWindow:
         self.root = Tk()
         self.root.title("MinGui Youtube-dl")
         self.root.minsize(720,360)
-        self.txtConsole = Text(
-            bg= self.settings.console_bg,
-            fg= self.settings.console_fg,
-            font= (self.settings.font_name, self.settings.font_size)
-        )
 
         #link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
@@ -88,7 +83,23 @@ class MainWindow:
         self.entColors.insert(0, self.settings.colors)
 
         #Console
-        self.txtConsole.grid(row=102, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
+        self.fmConsole = Frame(bg=blocks_color)
+        self.fmConsole.grid(row=102, column=0, columnspan=3, sticky="WNES", pady=10, padx=10)
+        
+        self.txtConsole = Text(
+            self.fmConsole,
+            bg=self.settings.console_bg,
+            fg=self.settings.console_fg,
+            font=(self.settings.font_name, self.settings.font_size)
+        )
+        scroll = Scrollbar(self.fmConsole, command=self.txtConsole.yview, activebackground="red")
+        
+        self.txtConsole .grid(row=102, column=0, sticky="WNES")
+        scroll          .grid(row=102, column=1, sticky="WNES")
+        self.txtConsole.config(yscrollcommand=scroll.set)
+
+        self.fmConsole.columnconfigure(0, weight=20)
+        self.fmConsole.rowconfigure(102, weight=20)
 
         #Root
         self.root.columnconfigure(0, weight=0, minsize=100)
