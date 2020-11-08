@@ -11,7 +11,6 @@ START = "1.0" #start index for text item
 LAST_LINE = ("end-1l", END)
 PENULTIMATE_LINE = ("end-2l", "end-1l")
 
-youtube_dl_app = "C:\\Program Files (x86)\\youtube-dl\\youtube-dl.exe"
 enter_point_fname = os.path.realpath(sys.argv[0])
 app_root_dir = os.path.dirname(enter_point_fname)
 
@@ -55,14 +54,13 @@ def parse_colors(color_config: str):
     return opt
 
 #utils
-def exec_youtube_dl(link, *options) -> subprocess.Popen:
+def exec_youtube_dl(youtube_dl_path, *options) -> subprocess.Popen:
     l = list(options)
-    l.insert(0, youtube_dl_app)
-    l.append(link)
+    l.insert(0, youtube_dl_path)
     return subprocess.Popen(l, stdout=subprocess.PIPE)
 
-def exec_get_info(link) -> subprocess.Popen:
-    return exec_youtube_dl(link, "-F")
+def exec_get_info(youtube_dl_path, link) -> subprocess.Popen:
+    return exec_youtube_dl(youtube_dl_path, link, "-F")
 
 def _readline(obj, newline = (b"\n", b"\r")):
     l = []

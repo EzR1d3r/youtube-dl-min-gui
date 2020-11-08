@@ -32,7 +32,7 @@ class MainWindow:
 
         self.entDwnLink = Entry(self.root)
         self.entDwnLink.grid(row=0, column=1, sticky="WE", pady=10, padx=10)
-        self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=S6ygE226h-0")
+        self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=rl9FFZZnWWo")
 
         #Download block
         self.fmDLBlock = Frame(bg=blocks_color)
@@ -105,8 +105,6 @@ class MainWindow:
         self.root.columnconfigure(0, weight=0, minsize=100)
         self.root.columnconfigure(1, weight=20, minsize=350)
         self.root.columnconfigure(2, weight=10, minsize=250)
-        # self.root.columnconfigure(3, weight=10, minsize=100)
-        # self.root.columnconfigure(4, weight=10, minsize=100)
         self.root.rowconfigure(102, weight=100)
 
         self.bind_gui()
@@ -116,9 +114,7 @@ class MainWindow:
         self.append_console_line(f"MinGui Youtube-dl v{app_version} (c) Voronezh Statics\n")
         self.append_console_line("Youtube-dl version:\n")
 
-        proc = ut.exec_youtube_dl("", "--version")
-        self.__redirect_out(proc)
-        proc = ut.exec_youtube_dl("", "--help")
+        proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, "--version")
         self.__redirect_out(proc)
 
     def bind_gui(self):
@@ -135,11 +131,12 @@ class MainWindow:
         dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
         options = options_str.split(" ") if options_str else []
         options+=["-o", dl_path]
-        proc = ut.exec_youtube_dl(link, *options)
+        options+=["--ffmpeg-location", self.settings.ffmpeg_path]
+        proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, link, *options)
         self.__redirect_out(proc)
 
     def get_info(self, link):
-        proc = ut.exec_get_info(link)
+        proc = ut.exec_get_info(self.settings.youtube_dl_path, link)
         self.__redirect_out(proc)
         
     def __redirect_out(self, proc: subprocess.Popen):
