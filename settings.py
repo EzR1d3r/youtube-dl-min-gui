@@ -36,6 +36,7 @@ class Settings:
     font_size: int = 12
     console_bg: str = "black"
     console_fg: str = "#2bfe72"
+    language: str = "RU"
 
 def save_settings(settings_obj: Settings, fname: str = settings_fname) -> None:
     _json = asdict(settings_obj)

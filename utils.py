@@ -10,6 +10,9 @@ from tkinter import Text
 START = "1.0" #start index for text item
 LAST_LINE = ("end-1l", END)
 PENULTIMATE_LINE = ("end-2l", "end-1l")
+READ_ME_prefix = "READ_ME"
+language_dir_name = "language"
+md = "md"
 
 enter_point_fname = os.path.realpath(sys.argv[0])
 app_root_dir = os.path.dirname(enter_point_fname)
@@ -87,3 +90,13 @@ def read_output(p: subprocess.Popen, out_append = print, out_replace = print):
                 break
         except ValueError:
             break
+
+def load_read_me(language_suffix: str)->str:
+    read_me_fname = ".".join([READ_ME_prefix, language_suffix, md])
+    read_me_path = os.path.join(app_root_dir, language_dir_name, read_me_fname)
+
+    try:
+        with open(read_me_path, "r", encoding="utf-8") as file:
+            return file.read()
+    except FileNotFoundError:
+        return f"Can't find the read_me file: {read_me_path}"

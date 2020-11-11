@@ -113,13 +113,14 @@ class MainWindow:
 
         self.bind_gui()
         self.show_app_info()
+        self.append_console_line(ut.load_read_me(self.settings.language))
 
     def show_app_info(self):
         self.append_console_line(f"MinGui Youtube-dl v{app_version} (c) Voronezh Statics\n")
-        self.append_console_line("Youtube-dl version:\n")
 
         proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, "--version")
-        self.__redirect_out(proc)
+        version, _ = proc.communicate()
+        self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
         self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection='CLIPBOARD') ))
