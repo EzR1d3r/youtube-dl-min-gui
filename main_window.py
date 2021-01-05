@@ -32,7 +32,7 @@ class MainWindow:
 
         self.entDwnLink = Entry(self.root, bg="light green")
         self.entDwnLink.grid(row=0, column=1, sticky="WE", pady=10, padx=10)
-        self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=rl9FFZZnWWo")
+        # self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=rl9FFZZnWWo")
 
         #Download block
         self.fmDLBlock = Frame(bg=blocks_color)
