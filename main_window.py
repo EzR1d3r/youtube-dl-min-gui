@@ -3,7 +3,7 @@ import subprocess
 import os
 
 from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
-from tkinter import LEFT, END, Y
+from tkinter import LEFT, END, Y, END, FIRST
 from tkinter import messagebox
 
 import utils as ut
@@ -127,7 +127,13 @@ class MainWindow:
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
-        self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection="CLIPBOARD")))
+        self.entDwnLink.bind(
+            "<Button-3>",
+            lambda x: (
+                self.entDwnLink.delete(0, END),
+                self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection="CLIPBOARD")),
+            )
+        )
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
         self.btnExec.bind("<ButtonRelease>", lambda x: self.exec_options(self.entOptions.get()))
