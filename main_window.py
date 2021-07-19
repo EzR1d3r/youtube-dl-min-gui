@@ -13,28 +13,30 @@ app_version = "1.0.0"
 
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
-dl_dir = os.path.expanduser( rel_dl_dir )
+dl_dir = os.path.expanduser(rel_dl_dir)
 blocks_color = "light grey"
+
 
 class MainWindow:
     def __init__(self):
         self.settings = load_settings()
         save_settings(self.settings)
 
-        #tk gui root
+        # tk gui root
         self.root = Tk()
         self.root.title("MinGui Youtube-dl")
-        self.root.minsize(720,360)
+        self.root.minsize(720, 360)
 
-        #link block
+        # link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
-        self.lbLink.grid(row=0,column=0,sticky="W",pady=10, padx=10)
+        self.lbLink.grid(row=0, column=0, sticky="W", pady=10, padx=10)
 
         self.entDwnLink = Entry(self.root, bg="light green")
         self.entDwnLink.grid(row=0, column=1, sticky="WE", pady=10, padx=10)
         # self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=rl9FFZZnWWo")
 
-        #Download block
+        # Download block
+        # fmt: off
         self.fmDLBlock = Frame(bg=blocks_color)
         self.fmDLBlock.grid(row=1, column=0, sticky="WNES", columnspan=2, pady=10, padx=10)
 
@@ -111,6 +113,8 @@ class MainWindow:
         self.root.columnconfigure(2, weight=10, minsize=250)
         self.root.rowconfigure(102, weight=100)
 
+        # fmt: on
+
         self.bind_gui()
         self.show_app_info()
         self.append_console_line(ut.load_read_me(self.settings.language))
@@ -123,11 +127,11 @@ class MainWindow:
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
-        self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection='CLIPBOARD') ))
+        self.entDwnLink.bind("<Button-3>", lambda x: self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection="CLIPBOARD")))
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
         self.btnExec.bind("<ButtonRelease>", lambda x: self.exec_options(self.entOptions.get()))
-        
+
         # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def mainloop(self):
@@ -136,8 +140,8 @@ class MainWindow:
     def download(self, link, options_str):
         dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
         options = options_str.split(" ") if options_str else []
-        options+=["-o", dl_path]
-        options+=["--ffmpeg-location", self.settings.ffmpeg_path]
+        options += ["-o", dl_path]
+        options += ["--ffmpeg-location", self.settings.ffmpeg_path]
         proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, link, *options)
         self.__redirect_out(proc)
 
@@ -149,17 +153,21 @@ class MainWindow:
     def get_info(self, link):
         proc = ut.exec_get_info(self.settings.youtube_dl_path, link)
         self.__redirect_out(proc)
-        
+
     def __redirect_out(self, proc: subprocess.Popen):
-        #read youtube-dl output and redirect to the console
-        t = Thread(target=ut.read_output, args=(proc,), kwargs={"out_append":self.append_console_line, "out_replace":self.replace_last_console_line})
+        # read youtube-dl output and redirect to the console
+        t = Thread(
+            target=ut.read_output,
+            args=(proc,),
+            kwargs={"out_append": self.append_console_line, "out_replace": self.replace_last_console_line},
+        )
         t.start()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.root.destroy()
 
-    #work with console text
+    # work with console text
     def append_console_line(self, text_line: str):
         ut._append_text_item_text_line(self.txtConsole, text_line)
         contains = ut.parse_colors(self.entColors.get())
