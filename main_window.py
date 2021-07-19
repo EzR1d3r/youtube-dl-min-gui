@@ -165,12 +165,19 @@ class MainWindow:
 
     def __redirect_out(self, proc: subprocess.Popen):
         # read youtube-dl output and redirect to the console
-        t = Thread(
+        t_out = Thread(
             target=ut.read_output,
-            args=(proc,),
+            args=(proc.stdout,),
             kwargs={"out_append": self.append_console_line, "out_replace": self.replace_last_console_line},
         )
-        t.start()
+        t_out.start()
+
+        t_errs = Thread(
+            target=ut.read_output,
+            args=(proc.stderr,),
+            kwargs={"out_append": self.append_console_line, "out_replace": self.replace_last_console_line},
+        )
+        t_errs.start()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):

@@ -31,7 +31,7 @@ class Settings:
     download_dir: str = std_dl_dir
     file_title: str = "%(title)s.%(ext)s"
     options: str = "-f 399+140"
-    colors: str = "mp4+1080p:cyan, m4a:magenta"
+    colors: str = "mp4+1080p:cyan, m4a:magenta, ERROR:red"
     font_name: str = "courier"
     font_size: int = 12
     console_bg: str = "black"

@@ -3,6 +3,8 @@ import sys
 import re
 import subprocess
 from threading import Thread
+from io import IOBase
+from typing import Type
 
 from tkinter import END
 from tkinter import Text
@@ -60,7 +62,7 @@ def parse_colors(color_config: str):
 def exec_youtube_dl(youtube_dl_path, *options) -> subprocess.Popen:
     l = list(options)
     l.insert(0, youtube_dl_path)
-    return subprocess.Popen(l, stdout=subprocess.PIPE)
+    return subprocess.Popen(l, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 def exec_get_info(youtube_dl_path, link) -> subprocess.Popen:
     return exec_youtube_dl(youtube_dl_path, link, "-F")
@@ -75,11 +77,10 @@ def _readline(obj, newline = (b"\n", b"\r")):
             break
     return b"".join(l)
 
-def read_output(p: subprocess.Popen, out_append = print, out_replace = print):
-    proc_stdout = p.stdout
+def read_output(stream: Type[IOBase], out_append = print, out_replace = print):
     while True:
         try:
-            text = _readline(proc_stdout)
+            text = _readline(stream)
             if text:
                 text = text.decode("cp1251")
                 if text.endswith("\r"):
