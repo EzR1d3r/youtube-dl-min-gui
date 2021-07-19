@@ -9,7 +9,7 @@ from tkinter import messagebox
 import utils as ut
 from settings import load_settings, save_settings
 
-app_version = "1.0.0"
+app_version = "1.0.1"
 
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
@@ -78,10 +78,12 @@ class MainWindow:
         self.lbColors  = Label(self.fmInfoBlock, text="Colors: ", bg=blocks_color, justify=LEFT)
         self.entColors = Entry(self.fmInfoBlock)
         self.btnInfo   = Button(self.fmInfoBlock, text="Link Info", width=20)
+        self.btnClearConsole = Button(self.fmInfoBlock, text="Clear output", width=20)
 
         self.lbColors  .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
         self.entColors .grid(row=0, column=1, sticky="WE", pady=10, padx=10)
         self.btnInfo   .grid(row=1, column=1, pady=10, padx=10, sticky="E")
+        self.btnClearConsole   .grid(row=2, column=1, pady=10, padx=10, sticky="E")
 
         self.fmInfoBlock.columnconfigure(0, weight=0, minsize=50)
         self.fmInfoBlock.columnconfigure(1, weight=20, minsize=150)
@@ -137,6 +139,7 @@ class MainWindow:
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
         self.btnExec.bind("<ButtonRelease>", lambda x: self.exec_options(self.entOptions.get()))
+        self.btnClearConsole.bind("<ButtonRelease>", lambda x: self.txtConsole.delete(ut.START, END))
 
         # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
