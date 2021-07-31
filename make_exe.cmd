@@ -1,0 +1,1 @@
+pyinstaller ./app.py --clean -F -n MinGui-youtube-dl
