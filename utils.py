@@ -62,7 +62,10 @@ def exec_youtube_dl(youtube_dl_path, *options) -> subprocess.Popen:
     return subprocess.Popen(l, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 def exec_get_info(youtube_dl_path, link) -> subprocess.Popen:
-    return exec_youtube_dl(youtube_dl_path, link, "-F")
+    return exec_youtube_dl(
+        youtube_dl_path, "--skip-download", "--no-playlist", "--encoding", "utf-8",
+        "--dump-single-json", "--", link
+    )
 
 def _readline(obj, newline = (b"\n", b"\r")):
     l = []

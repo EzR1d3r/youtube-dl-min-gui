@@ -5,10 +5,11 @@ import os
 from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
 from tkinter.ttk import Combobox
-from tkinter import messagebox
+from tkinter import messagebox, TclError
 
 import utils as ut
 from settings import load_settings, save_settings
+from link_info import read_link_info
 
 app_version = "1.0.1"
 
@@ -150,19 +151,22 @@ class MainWindow:
         self.entOptions.bind("<Return>", lambda event: self.save_options())
         self.entDownloadFolder.bind("<<ComboboxSelected>>", lambda event: self.save_download_folder())
         self.entDownloadFolder.bind("<Return>", lambda event: self.save_download_folder())
-        self.entDwnLink.bind(
-            "<Button-3>",
-            lambda x: (
-                self.entDwnLink.delete(0, END),
-                self.entDwnLink.insert(0, self.entDwnLink.selection_get(selection="CLIPBOARD")),
-            )
-        )
+        self.entDwnLink.bind("<Button-3>", self.paste_download_link)
         self.btnDownload.bind("<ButtonRelease>", lambda x: self.download(self.entDwnLink.get(), self.entOptions.get()))
         self.btnInfo.bind("<ButtonRelease>", lambda x: self.get_info(self.entDwnLink.get()))
         self.btnExec.bind("<ButtonRelease>", lambda x: self.exec_options(self.entOptions.get()))
         self.btnClearConsole.bind("<ButtonRelease>", lambda x: self.txtConsole.delete(ut.START, END))
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def paste_download_link(self, event):
+        try:
+            text = self.entDwnLink.clipboard_get()
+        except TclError:
+            return "break"
+        self.entDwnLink.delete(0, END)
+        self.entDwnLink.insert(0, text)
+        return "break"
 
     def mainloop(self):
         self.root.mainloop()
@@ -227,7 +231,7 @@ class MainWindow:
 
     def get_info(self, link):
         proc = ut.exec_get_info(self.settings.youtube_dl_path, link)
-        self.__redirect_out(proc)
+        Thread(target=read_link_info, args=(proc, self.append_console_line)).start()
 
     def __redirect_out(self, proc: subprocess.Popen):
         # read youtube-dl output and redirect to the console
