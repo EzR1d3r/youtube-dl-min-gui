@@ -10,9 +10,9 @@ EXE), then edit the paths before starting the application.
 
 - `youtube_dl_path`: full path to the downloader executable, such as yt-dlp.exe.
 - `ffmpeg_path`: path to the directory containing FFmpeg executables.
-- `download_dir`: nonempty list of output folders; the first folder is selected
+- `download_dir`: list of output folders; the first folder is selected
   at startup. Example: `["C:/Downloads/videos", "D:/Music"]`.
-- `options`: nonempty list of saved option presets; the first is selected at
+- `options`: list of saved option presets; the first is selected at
   startup. Example: `["-f 137+140", "-h", ""]`. An empty string means no extra options.
 - `colors`: comma-separated console highlighting rules, such as
   `mp4+1080p:cyan, m4a:magenta, ERROR:red`.
@@ -54,6 +54,9 @@ conversion. Consult the downloader's help for its supported options.
 
 ## Other controls
 
+- **−** next to Save folder or Options removes the current saved preset and
+  saves the updated list. The next remaining preset is selected. Deleting the
+  last preset clears the field; enter a folder before downloading.
 - **Exec** runs the downloader with only the contents of **Options**. It does
   not automatically add the URL, output folder, filename or FFmpeg path.
   To display help, enter `-h` and click **Exec**.

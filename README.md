@@ -8,7 +8,7 @@ a download. Downloader output and errors appear in the application console.
 
 - Video and audio downloads through an external downloader executable.
 - Format inspection and editable command-line options with saved presets.
-- Editable output-folder dropdown with saved history and a **+** button.
+- Editable output-folder dropdown with saved history and **+** / **−** buttons.
 - Output filename templates and configurable console colors and fonts.
 - English and Russian startup instructions.
 
@@ -34,7 +34,7 @@ installed separately and are not included in this repository.
    ```
 
 4. Edit `.settings.json`: set `youtube_dl_path` to the downloader executable,
-   `ffmpeg_path` to FFmpeg's `bin` directory and `download_dir` to a nonempty
+   `ffmpeg_path` to FFmpeg's `bin` directory and `download_dir` to a
    list of output folders. Use paths that exist on your computer.
 5. Start the application:
 
@@ -96,9 +96,9 @@ docs/                     English and Russian instructions and changelogs
 
 ## Current limitations
 
-- `download_dir` must be a nonempty JSON array. Older string values must be
+- `download_dir` must be a JSON array. Older string values must be
   changed manually, for example from `"C:/Downloads"` to `["C:/Downloads"]`.
-- `options` must also be a nonempty JSON array, for example `["-f 137+140", "-h"]`.
+- `options` must also be a JSON array, for example `["-f 137+140", "-h"]`.
   Use `[""]` for no extra options; change older string values to lists manually.
 - Options are split on spaces; shell-style quoting is not supported in the
   **Options** field. The separate folder field supports paths containing spaces.

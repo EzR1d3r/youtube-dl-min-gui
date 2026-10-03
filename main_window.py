@@ -5,6 +5,7 @@ import os
 from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
 from tkinter.ttk import Combobox
+from tkinter import messagebox
 
 import utils as ut
 from settings import load_settings, save_settings
@@ -44,11 +45,14 @@ class MainWindow:
 
         self.lbDownloadFolder  = Label(self.fmDLBlock, text="Save folder: ", bg=blocks_color, justify=LEFT)
         self.entDownloadFolder = Combobox(self.fmDLBlock, values=self.settings.download_dir)
-        self.btnSaveDownloadFolder = Button(self.fmDLBlock, text="+", width=2, command=self.save_download_folder)
+        self.fmFolderButtons = Frame(self.fmDLBlock, bg=blocks_color)
+        self.btnSaveDownloadFolder = Button(self.fmFolderButtons, text="+", width=2, command=self.save_download_folder)
+        self.btnDeleteDownloadFolder = Button(self.fmFolderButtons, text="-", width=2, command=self.delete_download_folder)
         self.lbOptions         = Label(self.fmDLBlock, text="Options: ", bg=blocks_color, justify=LEFT)
         self.fmOptions         = Frame(self.fmDLBlock, bg=blocks_color)
         self.entOptions        = Combobox(self.fmOptions, values=self.settings.options)
         self.btnSaveOptions    = Button(self.fmOptions, text="+", width=2, command=self.save_options)
+        self.btnDeleteOptions  = Button(self.fmOptions, text="-", width=2, command=self.delete_options)
         self.btnExec           = Button(self.fmDLBlock, text="Exec", width=5)
         self.lbTitleSheme      = Label(self.fmDLBlock, text="Title sheme: ", bg=blocks_color, justify=LEFT)
         self.entTitleSheme     = Entry(self.fmDLBlock)
@@ -56,12 +60,15 @@ class MainWindow:
 
         self.lbDownloadFolder .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
         self.entDownloadFolder.grid(row=0, column=1, sticky="WE", pady=10, padx=(10, 2), columnspan=4)
-        self.btnSaveDownloadFolder.grid(row=0, column=5, sticky="E", pady=10, padx=(2, 10))
+        self.fmFolderButtons.grid(row=0, column=5, sticky="E", pady=10, padx=(2, 10))
+        self.btnSaveDownloadFolder.grid(row=0, column=0)
+        self.btnDeleteDownloadFolder.grid(row=0, column=1, padx=(2, 0))
         
         self.lbOptions        .grid(row=1, column=0, sticky="W",  pady=10, padx=10)
         self.fmOptions        .grid(row=1, column=1, sticky="WE", pady=10, padx=10)
         self.entOptions       .grid(row=0, column=0, sticky="WE")
         self.btnSaveOptions   .grid(row=0, column=1, padx=(2, 0))
+        self.btnDeleteOptions .grid(row=0, column=2, padx=(2, 0))
         self.fmOptions.columnconfigure(0, weight=1)
         self.btnExec          .grid(row=1, column=2, sticky="W",  pady=10, padx=2)
         self.lbTitleSheme     .grid(row=1, column=3, sticky="W",  pady=10, padx=10)
@@ -76,8 +83,8 @@ class MainWindow:
         self.fmDLBlock.columnconfigure(4, weight=10, minsize=50) #
         self.fmDLBlock.columnconfigure(5, weight=0, minsize=30)
 
-        self.entDownloadFolder.set(self.settings.download_dir[0])
-        self.entOptions.set(self.settings.options[0])
+        self.entDownloadFolder.set(self.settings.download_dir[0] if self.settings.download_dir else "")
+        self.entOptions.set(self.settings.options[0] if self.settings.options else "")
         self.entTitleSheme.insert(0, title_scheme)
 
         #Link Info block
@@ -182,7 +189,27 @@ class MainWindow:
         self.entOptions.set(options)
         save_settings(self.settings)
 
+    def delete_download_folder(self):
+        self._delete_preset("download_dir", self.entDownloadFolder)
+
+    def delete_options(self):
+        self._delete_preset("options", self.entOptions)
+
+    def _delete_preset(self, setting_name, combobox):
+        selected = combobox.get().strip()
+        presets = getattr(self.settings, setting_name)
+        if selected not in presets:
+            return
+        remaining = [preset for preset in presets if preset != selected]
+        setattr(self.settings, setting_name, remaining)
+        combobox.configure(values=remaining)
+        combobox.set(remaining[0] if remaining else "")
+        save_settings(self.settings)
+
     def download(self, link, options_str):
+        if not self.entDownloadFolder.get().strip():
+            messagebox.showerror("Download", "Choose a save folder first.", parent=self.root)
+            return
         self.save_download_folder()
         self.save_options(options_str)
         dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
