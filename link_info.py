@@ -2,7 +2,9 @@
 
 import json
 import subprocess
-from typing import Any, Callable
+from typing import Any, Callable, Optional
+
+from chapters import Chapter, ChapterParseError, parse_chapters
 
 
 def format_formats(metadata: dict[str, Any]) -> str:
@@ -40,7 +42,11 @@ def format_formats(metadata: dict[str, Any]) -> str:
     return f"Available formats for {title}:\n{table}\n"
 
 
-def read_link_info(process: subprocess.Popen[bytes], out_append: Callable[[str], None]) -> None:
+def read_link_info(
+    process: subprocess.Popen[bytes],
+    out_append: Callable[[str], None],
+    on_chapters: Optional[Callable[[list[Chapter]], None]] = None,
+) -> None:
     """Read one process in a background thread, using the existing output callback."""
     def output(text: str) -> None:
         for line in text.splitlines(keepends=True):
@@ -56,5 +62,12 @@ def read_link_info(process: subprocess.Popen[bytes], out_append: Callable[[str],
         if not isinstance(metadata, dict) or "entries" in metadata or metadata.get("_type") in {"playlist", "multi_video"}:
             raise ValueError("Expected metadata for a single video")
         output(format_formats(metadata))
+        if on_chapters is not None:
+            try:
+                chapters = parse_chapters(metadata)
+            except ChapterParseError as error:
+                output(f"ERROR: Could not parse chapters: {error}\n")
+                chapters = []
+            on_chapters(chapters)
     except (OSError, ValueError, UnicodeDecodeError) as error:
         output(f"ERROR: Could not read link information: {error}\n")

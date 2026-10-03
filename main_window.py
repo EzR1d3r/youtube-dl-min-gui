@@ -10,6 +10,7 @@ from tkinter import messagebox, TclError
 import utils as ut
 from settings import load_settings, save_settings
 from link_info import read_link_info
+from chapters import Chapter
 
 app_version = "1.0.1"
 
@@ -31,11 +32,15 @@ class MainWindow:
         if self.settings.window_size:
             self.root.geometry(self.settings.window_size)
 
+        self.chapters: list[Chapter] = []
+        self._info_link = ""
+
         # link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
         self.lbLink.grid(row=0, column=0, sticky="W", pady=10, padx=10)
 
-        self.entDwnLink = Entry(self.root, bg="light green")
+        self.link_var = StringVar(master=self.root)
+        self.entDwnLink = Entry(self.root, bg="light green", textvariable=self.link_var)
         self.entDwnLink.grid(row=0, column=1, sticky="WE", pady=10, padx=10)
         # self.entDwnLink.insert(0, "https://www.youtube.com/watch?v=rl9FFZZnWWo")
 
@@ -147,6 +152,7 @@ class MainWindow:
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
+        self.link_var.trace_add("write", self._clear_link_info)
         self.entOptions.bind("<<ComboboxSelected>>", lambda event: self.save_options())
         self.entOptions.bind("<Return>", lambda event: self.save_options())
         self.entDownloadFolder.bind("<<ComboboxSelected>>", lambda event: self.save_download_folder())
@@ -230,8 +236,24 @@ class MainWindow:
         self.__redirect_out(proc)
 
     def get_info(self, link):
+        link = link.strip()
+        self._clear_link_info()
         proc = ut.exec_get_info(self.settings.youtube_dl_path, link)
-        Thread(target=read_link_info, args=(proc, self.append_console_line)).start()
+        Thread(
+            target=read_link_info,
+            args=(proc, self.append_console_line),
+            kwargs={"on_chapters": lambda chapters: self._set_chapters(link, chapters)},
+        ).start()
+
+    def _clear_link_info(self, *args):
+        self._info_link = self.link_var.get().strip()
+        self.chapters = []
+
+    def _set_chapters(self, link: str, chapters: list[Chapter]) -> None:
+        # Only store Python data here; this callback runs in the reader thread.
+        if link != self._info_link:
+            return
+        self.chapters = chapters
 
     def __redirect_out(self, proc: subprocess.Popen):
         # read youtube-dl output and redirect to the console

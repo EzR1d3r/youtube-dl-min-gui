@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from link_info import format_formats, read_link_info
+from chapters import Chapter
 from main_window import MainWindow
 import utils
 
@@ -49,6 +50,25 @@ class LinkInfoTests(unittest.TestCase):
         self.assertIn('network error', ''.join(output))
         self.assertIn('exit code 1', ''.join(output))
 
+    def test_callback_receives_only_parsed_chapters(self):
+        metadata = {'duration': 10, 'formats': [], 'chapters': [{'title': 'Intro', 'start_time': 0}]}
+        process = Mock(returncode=0)
+        process.communicate.return_value = (json.dumps(metadata).encode(), b'')
+        callback = Mock()
+        read_link_info(process, Mock(), callback)
+        callback.assert_called_once_with([Chapter('Intro', 0, 10)])
+
+    def test_bad_chapters_preserve_formats(self):
+        metadata = {'formats': [{'format_id': '140'}], 'chapters': [{'start_time': 0}]}
+        process = Mock(returncode=0)
+        process.communicate.return_value = (json.dumps(metadata).encode(), b'')
+        output = []
+        callback = Mock()
+        read_link_info(process, output.append, callback)
+        self.assertIn('140', ''.join(output))
+        self.assertIn('Could not parse chapters', ''.join(output))
+        callback.assert_called_once_with([])
+
     def test_one_json_command_without_download(self):
         with patch('utils.exec_youtube_dl') as execute:
             utils.exec_get_info('yt-dlp.exe', 'url')
@@ -63,12 +83,25 @@ class LinkInfoTests(unittest.TestCase):
         window.settings = SimpleNamespace(youtube_dl_path='yt-dlp.exe')
         window.append_console_line = Mock()
         window.btnInfo = Mock()
+        window.link_var = Mock()
+        window.link_var.get.return_value = 'url'
         with patch('utils.exec_get_info') as execute, patch('main_window.Thread') as thread:
             window.get_info('url')
             window.get_info('url')
         self.assertEqual(execute.call_count, 2)
         self.assertEqual(thread.return_value.start.call_count, 2)
         window.btnInfo.configure.assert_not_called()
+
+    def test_chapter_data_is_cleared_when_link_changes(self):
+        window = MainWindow.__new__(MainWindow)
+        window.link_var = Mock()
+        window.link_var.get.return_value = 'new-url'
+        window.chapters = [Chapter('Intro', 0, 10)]
+        window._clear_link_info()
+        window._set_chapters('old-url', [Chapter('Intro', 0, 10)])
+        self.assertEqual(window.chapters, [])
+        window._set_chapters('new-url', [Chapter('New', 0, 20)])
+        self.assertEqual(window.chapters, [Chapter('New', 0, 20)])
 
 
 if __name__ == '__main__':
