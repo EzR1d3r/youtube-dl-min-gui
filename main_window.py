@@ -2,7 +2,7 @@ from threading import Thread
 import subprocess
 import os
 
-from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
+from tkinter import Tk, Label, Button, Entry, StringVar, BooleanVar, Checkbutton, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
 from tkinter.ttk import Combobox
 from tkinter import messagebox, TclError
@@ -11,6 +11,7 @@ import utils as ut
 from settings import load_settings, save_settings
 from link_info import read_link_info
 from chapters import Chapter
+from chapter_editor import ChapterEditor
 
 app_version = "1.0.1"
 
@@ -100,17 +101,27 @@ class MainWindow:
         self.lbColors  = Label(self.fmInfoBlock, text="Colors: ", bg=blocks_color, justify=LEFT)
         self.entColors = Entry(self.fmInfoBlock)
         self.btnInfo   = Button(self.fmInfoBlock, text="Link Info", width=20)
+        self.show_chapters = BooleanVar(master=self.root, value=False)
+        self.chkShowChapters = Checkbutton(
+            self.fmInfoBlock, text="Show chapters", variable=self.show_chapters,
+            command=self._toggle_chapters, bg=blocks_color,
+        )
         self.btnClearConsole = Button(self.fmInfoBlock, text="Clear output", width=20)
 
         self.lbColors  .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
         self.entColors .grid(row=0, column=1, sticky="WE", pady=10, padx=10)
         self.btnInfo   .grid(row=1, column=1, pady=10, padx=10, sticky="E")
+        self.chkShowChapters.grid(row=1, column=0, pady=10, padx=10, sticky="W")
         self.btnClearConsole   .grid(row=2, column=1, pady=10, padx=10, sticky="E")
 
         self.fmInfoBlock.columnconfigure(0, weight=0, minsize=50)
         self.fmInfoBlock.columnconfigure(1, weight=20, minsize=150)
 
         self.entColors.insert(0, self.settings.colors)
+
+        self.chapter_editor = ChapterEditor(self.root, on_change=self._chapters_edited)
+        self.chapter_editor.grid(row=2, column=0, columnspan=3, sticky="WE", padx=10, pady=(0, 10))
+        self.chapter_editor.grid_remove()
 
         #Console
         self.fmConsole = Frame(bg=blocks_color)
@@ -242,17 +253,36 @@ class MainWindow:
         Thread(
             target=read_link_info,
             args=(proc, self.append_console_line),
-            kwargs={"on_chapters": lambda chapters: self._set_chapters(link, chapters)},
+            kwargs={"on_chapters": lambda chapters: self._receive_chapters(link, chapters)},
         ).start()
 
     def _clear_link_info(self, *args):
         self._info_link = self.link_var.get().strip()
         self.chapters = []
+        self.chapter_editor.set_chapters([])
+        self.chapter_editor.grid_remove()
+
+    def _receive_chapters(self, link: str, chapters: list[Chapter]) -> None:
+        # Create and update widgets in Tk's main thread, without a polling queue.
+        try:
+            self.root.after(0, self._set_chapters, link, chapters)
+        except (TclError, RuntimeError):
+            return
 
     def _set_chapters(self, link: str, chapters: list[Chapter]) -> None:
-        # Only store Python data here; this callback runs in the reader thread.
         if link != self._info_link:
             return
+        self.chapters = chapters
+        self.chapter_editor.set_chapters(chapters)
+        self._toggle_chapters()
+
+    def _toggle_chapters(self) -> None:
+        if self.show_chapters.get() and self.chapters:
+            self.chapter_editor.grid()
+        else:
+            self.chapter_editor.grid_remove()
+
+    def _chapters_edited(self, chapters: list[Chapter]) -> None:
         self.chapters = chapters
 
     def __redirect_out(self, proc: subprocess.Popen):

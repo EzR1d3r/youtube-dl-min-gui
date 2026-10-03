@@ -83,6 +83,7 @@ class LinkInfoTests(unittest.TestCase):
         window.settings = SimpleNamespace(youtube_dl_path='yt-dlp.exe')
         window.append_console_line = Mock()
         window.btnInfo = Mock()
+        window.chapter_editor = Mock()
         window.link_var = Mock()
         window.link_var.get.return_value = 'url'
         with patch('utils.exec_get_info') as execute, patch('main_window.Thread') as thread:
@@ -94,6 +95,9 @@ class LinkInfoTests(unittest.TestCase):
 
     def test_chapter_data_is_cleared_when_link_changes(self):
         window = MainWindow.__new__(MainWindow)
+        window.chapter_editor = Mock()
+        window.show_chapters = Mock()
+        window.show_chapters.get.return_value = True
         window.link_var = Mock()
         window.link_var.get.return_value = 'new-url'
         window.chapters = [Chapter('Intro', 0, 10)]

@@ -65,6 +65,11 @@ def read_link_info(
         if on_chapters is not None:
             try:
                 chapters = parse_chapters(metadata)
+                if not chapters and metadata.get("duration") is not None:
+                    chapters = parse_chapters({
+                        "duration": metadata["duration"],
+                        "chapters": [{"title": metadata.get("title") or "Full file", "start_time": 0}],
+                    })
             except ChapterParseError as error:
                 output(f"ERROR: Could not parse chapters: {error}\n")
                 chapters = []
