@@ -7,7 +7,7 @@ a download. Downloader output and errors appear in the application console.
 ## Features
 
 - Video and audio downloads through an external downloader executable.
-- Format inspection and editable command-line options.
+- Format inspection and editable command-line options with saved presets.
 - Editable output-folder dropdown with saved history and a **+** button.
 - Output filename templates and configurable console colors and fonts.
 - English and Russian startup instructions.
@@ -98,9 +98,11 @@ docs/                     English and Russian instructions and changelogs
 
 - `download_dir` must be a nonempty JSON array. Older string values must be
   changed manually, for example from `"C:/Downloads"` to `["C:/Downloads"]`.
+- `options` must also be a nonempty JSON array, for example `["-f 137+140", "-h"]`.
+  Use `[""]` for no extra options; change older string values to lists manually.
 - Options are split on spaces; shell-style quoting is not supported in the
   **Options** field. The separate folder field supports paths containing spaces.
-- Folder history is saved automatically; edits to **Options**, **Title sheme**
-  and **Colors** apply to the current session. Startup options and colors come
+- Folder and options histories are saved automatically; edits to **Title sheme**
+  and **Colors** apply to the current session. Startup colors come
   from `.settings.json`; the filename field currently starts with
   `%(title)s.%(ext)s`.

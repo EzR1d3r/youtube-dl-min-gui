@@ -5,7 +5,7 @@
         "C:/Downloads/youtube-downloads"
     ],
     "file_title": "%(title)s.%(ext)s",
-    "options": "",
+    "options": [""],
     "colors": "mp4+1080p:cyan, m4a:magenta, ERROR:red",
     "font_name": "courier",
     "font_size": 12,

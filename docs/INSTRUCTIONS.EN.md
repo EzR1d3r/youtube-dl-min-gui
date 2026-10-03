@@ -12,7 +12,8 @@ EXE), then edit the paths before starting the application.
 - `ffmpeg_path`: path to the directory containing FFmpeg executables.
 - `download_dir`: nonempty list of output folders; the first folder is selected
   at startup. Example: `["C:/Downloads/videos", "D:/Music"]`.
-- `options`: initial contents of the Options field.
+- `options`: nonempty list of saved option presets; the first is selected at
+  startup. Example: `["-f 137+140", "-h", ""]`. An empty string means no extra options.
 - `colors`: comma-separated console highlighting rules, such as
   `mp4+1080p:cyan, m4a:magenta, ERROR:red`.
 - `font_name`, `font_size`, `console_bg`, `console_fg`: console appearance.
@@ -22,6 +23,7 @@ EXE), then edit the paths before starting the application.
 JSON paths may use forward slashes (`C:/Downloads`) or escaped backslashes
 (`C:\\Downloads`). If an older configuration stores `download_dir` as a string,
 replace it with a list manually. Automatic migration is not provided.
+Older `options` strings also need to be changed to lists manually.
 
 ## Download a video or audio file
 
@@ -33,6 +35,8 @@ replace it with a list manually. Automatic migration is not provided.
 4. Enter the desired downloader arguments in **Options**. For example,
    `-f 137+140` combines video format 137 and audio format 140 when those codes
    are available. Format codes depend on the URL; use the actual listed codes.
+   Choose a saved preset from the dropdown, or save the current value using
+   the **+** button next to Options or Enter.
 5. Set the filename template in **Title sheme**. The initial template is
    `%(title)s.%(ext)s`.
 6. Click **Download** and watch the console for progress or errors.
@@ -55,9 +59,11 @@ conversion. Consult the downloader's help for its supported options.
 - **Colors** controls highlighting. In a rule such as `mp4+1080p:cyan`, both
   terms must occur in a line for that line to match.
 
-Folder history is saved to `.settings.json`. Other edited fields affect the
-current session; edit the configuration file while the app is closed for
-persistent startup options and colors. The `file_title` setting is currently
+Folder and options histories are saved to `.settings.json`. Selecting an options
+preset, **Download** or **Exec** also saves the current options, with duplicates
+removed and the last selected preset restored at startup. Empty options can be saved.
+Other edited fields affect the current session; edit the configuration file while
+the app is closed for persistent startup colors. The `file_title` setting is currently
 not applied to the initial filename field.
 
 ## Troubleshooting

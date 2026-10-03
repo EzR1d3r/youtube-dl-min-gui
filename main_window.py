@@ -45,7 +45,9 @@ class MainWindow:
         self.entDownloadFolder = Combobox(self.fmDLBlock, values=self.settings.download_dir)
         self.btnSaveDownloadFolder = Button(self.fmDLBlock, text="+", width=2, command=self.save_download_folder)
         self.lbOptions         = Label(self.fmDLBlock, text="Options: ", bg=blocks_color, justify=LEFT)
-        self.entOptions        = Entry(self.fmDLBlock)
+        self.fmOptions         = Frame(self.fmDLBlock, bg=blocks_color)
+        self.entOptions        = Combobox(self.fmOptions, values=self.settings.options)
+        self.btnSaveOptions    = Button(self.fmOptions, text="+", width=2, command=self.save_options)
         self.btnExec           = Button(self.fmDLBlock, text="Exec", width=5)
         self.lbTitleSheme      = Label(self.fmDLBlock, text="Title sheme: ", bg=blocks_color, justify=LEFT)
         self.entTitleSheme     = Entry(self.fmDLBlock)
@@ -56,7 +58,10 @@ class MainWindow:
         self.btnSaveDownloadFolder.grid(row=0, column=5, sticky="E", pady=10, padx=(2, 10))
         
         self.lbOptions        .grid(row=1, column=0, sticky="W",  pady=10, padx=10)
-        self.entOptions       .grid(row=1, column=1, sticky="WE", pady=10, padx=10)
+        self.fmOptions        .grid(row=1, column=1, sticky="WE", pady=10, padx=10)
+        self.entOptions       .grid(row=0, column=0, sticky="WE")
+        self.btnSaveOptions   .grid(row=0, column=1, padx=(2, 0))
+        self.fmOptions.columnconfigure(0, weight=1)
         self.btnExec          .grid(row=1, column=2, sticky="W",  pady=10, padx=2)
         self.lbTitleSheme     .grid(row=1, column=3, sticky="W",  pady=10, padx=10)
         self.entTitleSheme    .grid(row=1, column=4, sticky="WE", pady=10, padx=10, columnspan=2)
@@ -71,7 +76,7 @@ class MainWindow:
         self.fmDLBlock.columnconfigure(5, weight=0, minsize=30)
 
         self.entDownloadFolder.set(self.settings.download_dir[0])
-        self.entOptions.insert(0, self.settings.options)
+        self.entOptions.set(self.settings.options[0])
         self.entTitleSheme.insert(0, title_scheme)
 
         #Link Info block
@@ -133,6 +138,8 @@ class MainWindow:
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
+        self.entOptions.bind("<<ComboboxSelected>>", lambda event: self.save_options())
+        self.entOptions.bind("<Return>", lambda event: self.save_options())
         self.entDownloadFolder.bind("<<ComboboxSelected>>", lambda event: self.save_download_folder())
         self.entDownloadFolder.bind("<Return>", lambda event: self.save_download_folder())
         self.entDwnLink.bind(
@@ -165,8 +172,18 @@ class MainWindow:
         self.entDownloadFolder.set(folder)
         save_settings(self.settings)
 
+    def save_options(self, options_str=None):
+        options = (self.entOptions.get() if options_str is None else options_str).strip()
+        self.settings.options = [options] + [
+            saved for saved in self.settings.options if saved != options
+        ]
+        self.entOptions.configure(values=self.settings.options)
+        self.entOptions.set(options)
+        save_settings(self.settings)
+
     def download(self, link, options_str):
         self.save_download_folder()
+        self.save_options(options_str)
         dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
         options = options_str.split(" ") if options_str else []
         options += ["-o", dl_path]
@@ -175,6 +192,7 @@ class MainWindow:
         self.__redirect_out(proc)
 
     def exec_options(self, options_str):
+        self.save_options(options_str)
         options = options_str.split(" ") if options_str else []
         proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, *options)
         self.__redirect_out(proc)

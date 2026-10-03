@@ -4,6 +4,7 @@
 
 ## 1.1.0 (Unreleased)
 
+- Save option presets with **+**, select them from a dropdown and restore the last used preset.
 - Save download folders with **+** and select them from a dropdown.
 - Restore the last selected folder on startup.
 - Show instructions and change history in English or Russian at startup.
