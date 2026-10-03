@@ -12,9 +12,6 @@ from tkinter import Text
 START = "1.0" #start index for text item
 LAST_LINE = ("end-1l", END)
 PENULTIMATE_LINE = ("end-2l", "end-1l")
-READ_ME_prefix = "READ_ME"
-language_dir_name = "language"
-md = "md"
 
 enter_point_fname = os.path.realpath(sys.argv[0])
 app_root_dir = os.path.dirname(enter_point_fname)
@@ -92,12 +89,22 @@ def read_output(stream: Type[IOBase], out_append = print, out_replace = print):
         except ValueError:
             break
 
-def load_read_me(language_suffix: str)->str:
-    read_me_fname = ".".join([READ_ME_prefix, language_suffix, md])
-    read_me_path = os.path.join(app_root_dir, language_dir_name, read_me_fname)
+def load_instructions(language_suffix: str) -> str:
+    return _load_document("INSTRUCTIONS", language_suffix)
+
+
+def load_changelog(language_suffix: str) -> str:
+    return _load_document("CHANGELOG", language_suffix)
+
+
+def _load_document(document: str, language_suffix: str) -> str:
+    language = language_suffix.upper()
+    if language not in {"EN", "RU"}:
+        language = "EN"
+    document_path = os.path.join(app_root_dir, "docs", f"{document}.{language}.md")
 
     try:
-        with open(read_me_path, "r", encoding="utf-8") as file:
+        with open(document_path, "r", encoding="utf-8") as file:
             return file.read()
     except FileNotFoundError:
-        return f"Can't find the read_me file: {read_me_path}"
+        return f"Can't find the {document.lower()} file: {document_path}"

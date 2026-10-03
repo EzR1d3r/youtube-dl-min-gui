@@ -1,0 +1,15 @@
+{
+    "youtube_dl_path": "C:/Tools/yt-dlp/yt-dlp.exe",
+    "ffmpeg_path": "C:/Tools/ffmpeg/bin",
+    "download_dir": [
+        "C:/Downloads/youtube-downloads"
+    ],
+    "file_title": "%(title)s.%(ext)s",
+    "options": "",
+    "colors": "mp4+1080p:cyan, m4a:magenta, ERROR:red",
+    "font_name": "courier",
+    "font_size": 12,
+    "console_bg": "black",
+    "console_fg": "#2bfe72",
+    "language": "EN"
+}

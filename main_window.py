@@ -122,7 +122,8 @@ class MainWindow:
 
         self.bind_gui()
         self.show_app_info()
-        self.append_console_line(ut.load_read_me(self.settings.language))
+        self.append_console_line(ut.load_instructions(self.settings.language))
+        self.append_console_line("\n\n" + ut.load_changelog(self.settings.language))
 
     def show_app_info(self):
         self.append_console_line(f"MinGui Youtube-dl v{app_version} (c) Voronezh Statics\n")
