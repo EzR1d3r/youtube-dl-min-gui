@@ -5,6 +5,7 @@ import os
 from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
 from tkinter import messagebox
+from tkinter.ttk import Combobox
 
 import utils as ut
 from settings import load_settings, save_settings
@@ -41,7 +42,8 @@ class MainWindow:
         self.fmDLBlock.grid(row=1, column=0, sticky="WNES", columnspan=2, pady=10, padx=10)
 
         self.lbDownloadFolder  = Label(self.fmDLBlock, text="Save folder: ", bg=blocks_color, justify=LEFT)
-        self.entDownloadFolder = Entry(self.fmDLBlock)
+        self.entDownloadFolder = Combobox(self.fmDLBlock, values=self.settings.download_dir)
+        self.btnSaveDownloadFolder = Button(self.fmDLBlock, text="+", width=2, command=self.save_download_folder)
         self.lbOptions         = Label(self.fmDLBlock, text="Options: ", bg=blocks_color, justify=LEFT)
         self.entOptions        = Entry(self.fmDLBlock)
         self.btnExec           = Button(self.fmDLBlock, text="Exec", width=5)
@@ -50,7 +52,8 @@ class MainWindow:
         self.btnDownload       = Button(self.fmDLBlock, text="Download", bg="light green", width=20)
 
         self.lbDownloadFolder .grid(row=0, column=0, sticky="W",  pady=10, padx=10)
-        self.entDownloadFolder.grid(row=0, column=1, sticky="WE", pady=10, padx=10, columnspan=5)
+        self.entDownloadFolder.grid(row=0, column=1, sticky="WE", pady=10, padx=(10, 2), columnspan=4)
+        self.btnSaveDownloadFolder.grid(row=0, column=5, sticky="E", pady=10, padx=(2, 10))
         
         self.lbOptions        .grid(row=1, column=0, sticky="W",  pady=10, padx=10)
         self.entOptions       .grid(row=1, column=1, sticky="WE", pady=10, padx=10)
@@ -65,9 +68,9 @@ class MainWindow:
         self.fmDLBlock.columnconfigure(2, weight=0, minsize=30)
         self.fmDLBlock.columnconfigure(3, weight=0, minsize=50) #
         self.fmDLBlock.columnconfigure(4, weight=10, minsize=50) #
-        self.fmDLBlock.columnconfigure(5, weight=10, minsize=50)
+        self.fmDLBlock.columnconfigure(5, weight=0, minsize=30)
 
-        self.entDownloadFolder.insert(0, self.settings.download_dir)
+        self.entDownloadFolder.set(self.settings.download_dir[0])
         self.entOptions.insert(0, self.settings.options)
         self.entTitleSheme.insert(0, title_scheme)
 
@@ -129,6 +132,8 @@ class MainWindow:
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
 
     def bind_gui(self):
+        self.entDownloadFolder.bind("<<ComboboxSelected>>", lambda event: self.save_download_folder())
+        self.entDownloadFolder.bind("<Return>", lambda event: self.save_download_folder())
         self.entDwnLink.bind(
             "<Button-3>",
             lambda x: (
@@ -146,7 +151,21 @@ class MainWindow:
     def mainloop(self):
         self.root.mainloop()
 
+    def save_download_folder(self):
+        folder = self.entDownloadFolder.get().strip()
+        if not folder:
+            return
+        # Keep the selected folder first so it is restored on the next launch.
+        self.settings.download_dir = [folder] + [
+            saved for saved in self.settings.download_dir
+            if os.path.normcase(os.path.normpath(saved)) != os.path.normcase(os.path.normpath(folder))
+        ]
+        self.entDownloadFolder.configure(values=self.settings.download_dir)
+        self.entDownloadFolder.set(folder)
+        save_settings(self.settings)
+
     def download(self, link, options_str):
+        self.save_download_folder()
         dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
         options = options_str.split(" ") if options_str else []
         options += ["-o", dl_path]

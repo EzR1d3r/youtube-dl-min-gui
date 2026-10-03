@@ -1,6 +1,6 @@
 import os
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import platform
 
 from utils import app_root_dir
@@ -28,7 +28,7 @@ else:
 class Settings:
     youtube_dl_path: str = std_path_youtube_dl_path
     ffmpeg_path: str = std_ffmpeg_dir
-    download_dir: str = std_dl_dir
+    download_dir: list[str] = field(default_factory=lambda: [std_dl_dir])
     file_title: str = "%(title)s.%(ext)s"
     options: str = "-f 399+140"
     colors: str = "mp4+1080p:cyan, m4a:magenta, ERROR:red"
