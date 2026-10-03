@@ -37,6 +37,7 @@ class Settings:
     console_bg: str = "black"
     console_fg: str = "#2bfe72"
     language: str = "RU"
+    window_size: str = ""
 
 def save_settings(settings_obj: Settings, fname: str = settings_fname) -> None:
     _json = asdict(settings_obj)

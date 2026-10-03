@@ -4,6 +4,7 @@
 
 ## 1.1.0 (Unreleased)
 
+- Remember the window size when closing and restore it on startup.
 - Save option presets with **+**, select them from a dropdown and restore the last used preset.
 - Save download folders with **+** and select them from a dropdown.
 - Restore the last selected folder on startup.

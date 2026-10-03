@@ -4,7 +4,6 @@ import os
 
 from tkinter import Tk, Label, Button, Entry, StringVar, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
-from tkinter import messagebox
 from tkinter.ttk import Combobox
 
 import utils as ut
@@ -27,6 +26,8 @@ class MainWindow:
         self.root = Tk()
         self.root.title("MinGui Youtube-dl")
         self.root.minsize(720, 360)
+        if self.settings.window_size:
+            self.root.geometry(self.settings.window_size)
 
         # link block
         self.lbLink = Label(self.root, text="Download link: ", justify=LEFT)
@@ -154,7 +155,7 @@ class MainWindow:
         self.btnExec.bind("<ButtonRelease>", lambda x: self.exec_options(self.entOptions.get()))
         self.btnClearConsole.bind("<ButtonRelease>", lambda x: self.txtConsole.delete(ut.START, END))
 
-        # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def mainloop(self):
         self.root.mainloop()
@@ -218,8 +219,9 @@ class MainWindow:
         t_errs.start()
 
     def on_closing(self):
-        if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            self.root.destroy()
+        self.settings.window_size = f"{self.root.winfo_width()}x{self.root.winfo_height()}"
+        save_settings(self.settings)
+        self.root.destroy()
 
     # work with console text
     def append_console_line(self, text_line: str):

@@ -17,6 +17,8 @@ EXE), then edit the paths before starting the application.
 - `colors`: comma-separated console highlighting rules, such as
   `mp4+1080p:cyan, m4a:magenta, ERROR:red`.
 - `font_name`, `font_size`, `console_bg`, `console_fg`: console appearance.
+- `window_size`: window dimensions, such as `"1000x650"`. Saved on closing and
+  restored at startup; an empty string lets Tkinter choose the initial size.
 - `language`: `EN` or `RU` for the startup instructions; interface labels remain
   in English.
 

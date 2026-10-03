@@ -11,5 +11,6 @@
     "font_size": 12,
     "console_bg": "black",
     "console_fg": "#2bfe72",
-    "language": "EN"
+    "language": "EN",
+    "window_size": ""
 }
