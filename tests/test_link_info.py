@@ -80,7 +80,7 @@ class LinkInfoTests(unittest.TestCase):
 
     def test_each_click_starts_a_request_without_disabling_button(self):
         window = MainWindow.__new__(MainWindow)
-        window.settings = SimpleNamespace(youtube_dl_path='yt-dlp.exe')
+        window.settings = SimpleNamespace(youtube_dl_path='yt-dlp.exe', js_runtime_path='')
         window.append_console_line = Mock()
         window.btnInfo = Mock()
         window.chapter_editor = Mock()

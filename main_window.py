@@ -235,24 +235,32 @@ class MainWindow:
             return
         split_mode = self.chapter_editor.mode.get() if self.show_chapters.get() else None
         try:
+            chapters = self.chapter_editor.get_chapters() if split_mode == "Extended" else None
             plan = build_download_plan(
                 options_str, self.entDownloadFolder.get(), self.entTitleSheme.get(),
-                self.settings.ffmpeg_path, split_mode,
+                self.settings.ffmpeg_path, split_mode, chapters, self.append_console_line,
             )
         except ValueError as error:
             self.append_console_line(f"{error}\n")
             return
         self.save_download_folder()
         self.save_options(options_str)
-        proc = ut.exec_youtube_dl(
-            self.settings.youtube_dl_path, *plan.options, "--", link,
-            js_runtime_path=self.settings.js_runtime_path,
+        try:
+            proc = ut.exec_youtube_dl(
+                self.settings.youtube_dl_path, *plan.options, "--", link,
+                js_runtime_path=self.settings.js_runtime_path,
+            )
+        except OSError:
+            plan.cleanup()
+            raise
+        self.__redirect_out(
+            proc, plan.postprocess if plan.postprocessors else None,
+            plan.cleanup if plan.workspace is not None else None,
         )
-        self.__redirect_out(proc, plan.postprocess if plan.postprocessors else None)
 
     def exec_options(self, options_str):
         self.save_options(options_str)
-        options = options_str.split(" ") if options_str else []
+        options = options_str.split()
         proc = ut.exec_youtube_dl(
             self.settings.youtube_dl_path, *options,
             js_runtime_path=self.settings.js_runtime_path,
@@ -300,7 +308,10 @@ class MainWindow:
     def _chapters_edited(self, chapters: list[Chapter]) -> None:
         self.chapters = chapters
 
-    def __redirect_out(self, proc: subprocess.Popen, on_success: Callable[[], None] | None = None):
+    def __redirect_out(
+        self, proc: subprocess.Popen, on_success: Callable[[], None] | None = None,
+        on_finish: Callable[[], None] | None = None,
+    ):
         # read youtube-dl output and redirect to the console
         t_out = Thread(
             target=ut.read_output,
@@ -316,16 +327,23 @@ class MainWindow:
         )
         t_errs.start()
 
-        if on_success is not None:
+        if on_success is not None or on_finish is not None:
             def finish_download():
-                returncode = proc.wait()
-                t_out.join()
-                t_errs.join()
-                if returncode == 0:
-                    try:
+                try:
+                    returncode = proc.wait()
+                    t_out.join()
+                    t_errs.join()
+                    if returncode == 0 and on_success is not None:
                         on_success()
-                    except Exception as error:
-                        self.append_console_line(f"Postprocessing failed: {error}\n")
+                    elif returncode != 0 and on_success is not None:
+                        self.append_console_line(
+                            f"Postprocessing skipped: yt-dlp exited with code {returncode}.\n"
+                        )
+                except Exception as error:
+                    self.append_console_line(f"Postprocessing failed: {error}\n")
+                finally:
+                    if on_finish is not None:
+                        on_finish()
 
             Thread(target=finish_download).start()
 
