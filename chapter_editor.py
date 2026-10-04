@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from typing import Callable
 
 from chapters import Chapter
+from time_spinbox import TimeSpinbox, format_time, parse_time, seconds_to_milliseconds
 
 
 @dataclass
@@ -44,29 +45,33 @@ class ChapterEditor(ttk.LabelFrame):
         for widget in self.body.winfo_children():
             widget.destroy()
         self.rows.clear()
-        for column, heading in enumerate(["#", "Chapter", "Start (s)", "End (s)", "Lock"]):
+        for column, heading in enumerate(["#", "Chapter", "Start", "End", "Lock"]):
             ttk.Label(self.body, text=heading).grid(row=0, column=column, sticky="w", padx=8, pady=4)
         maximum = max((chapter.end_time for chapter in chapters), default=1)
-        self._maximum = maximum
+        maximum_ms = seconds_to_milliseconds(maximum)
+        self._maximum = maximum_ms / 1000
         for number, chapter in enumerate(chapters, 1):
+            start_ms = seconds_to_milliseconds(chapter.start_time)
+            end_ms = seconds_to_milliseconds(chapter.end_time)
+            chapter = replace(chapter, start_time=start_ms / 1000, end_time=end_ms / 1000)
             row = ChapterRow(
                 chapter,
-                tk.StringVar(master=self, value=str(chapter.start_time)),
-                tk.StringVar(master=self, value=str(chapter.end_time)),
+                tk.StringVar(master=self, value=format_time(start_ms)),
+                tk.StringVar(master=self, value=format_time(end_ms)),
                 tk.BooleanVar(master=self, value=True),
             )
             self.rows.append(row)
             ttk.Label(self.body, text=str(number)).grid(row=number, column=0, sticky="w", padx=8, pady=4)
             ttk.Label(self.body, text=chapter.title).grid(row=number, column=1, sticky="w", padx=8, pady=4)
             for column, field, variable in [(2, "start", row.start), (3, "end", row.end)]:
-                spinbox = ttk.Spinbox(
-                    self.body, textvariable=variable, from_=0, to=maximum, increment=1, width=12
+                spinbox = TimeSpinbox(
+                    self.body, textvariable=variable, maximum_ms=maximum_ms
                 )
                 spinbox.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
                 index = number - 1
                 variable.trace_add("write", lambda *args, i=index, f=field: self._time_changed(i, f))
-                spinbox.bind("<FocusOut>", lambda event, i=index, f=field: self._finish_edit(i, f))
-                spinbox.bind("<Return>", lambda event, i=index, f=field: self._finish_edit(i, f))
+                spinbox.bind("<FocusOut>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
+                spinbox.bind("<Return>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
             lock = ttk.Checkbutton(self.body, variable=row.locked, command=lambda i=number - 1: self._lock_changed(i))
             lock.grid(row=number, column=4, padx=8, pady=4)
             if number == len(chapters):
@@ -74,14 +79,15 @@ class ChapterEditor(ttk.LabelFrame):
         for widget in self.body.winfo_children():
             widget.bind("<MouseWheel>", self._scroll)
         self.canvas.yview_moveto(0)
+        self.on_change([row.chapter for row in self.rows])
 
     def get_chapters(self) -> list[Chapter]:
         chapters = []
         for number, row in enumerate(self.rows, 1):
             try:
-                start, end = float(row.start.get()), float(row.end.get())
+                start, end = parse_time(row.start.get()) / 1000, parse_time(row.end.get()) / 1000
             except ValueError as error:
-                raise ValueError(f"Chapter {number}: enter times in seconds") from error
+                raise ValueError(f"Chapter {number}: enter HH:MM:SS:CC") from error
             self._validate_times(start, end, number)
             chapters.append(Chapter(row.chapter.title, start, end))
         return chapters
@@ -113,7 +119,7 @@ class ChapterEditor(ttk.LabelFrame):
             if neighbor is not None:
                 variable = self.rows[neighbor].start if field == "end" else self.rows[neighbor].end
                 value = chapters[neighbor].start_time if field == "end" else chapters[neighbor].end_time
-                variable.set(str(value))
+                variable.set(format_time(seconds_to_milliseconds(value)))
             for row, chapter in zip(self.rows, chapters):
                 row.chapter = chapter
         finally:
@@ -126,8 +132,8 @@ class ChapterEditor(ttk.LabelFrame):
         self._updating = True
         try:
             for row in self.rows:
-                row.start.set(str(row.chapter.start_time))
-                row.end.set(str(row.chapter.end_time))
+                row.start.set(format_time(seconds_to_milliseconds(row.chapter.start_time)))
+                row.end.set(format_time(seconds_to_milliseconds(row.chapter.end_time)))
         finally:
             self._updating = False
 
