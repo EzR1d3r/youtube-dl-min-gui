@@ -1,6 +1,7 @@
 from threading import Thread
 import subprocess
 import os
+from typing import Callable
 
 from tkinter import Tk, Label, Button, Entry, StringVar, BooleanVar, Checkbutton, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
@@ -12,6 +13,7 @@ from settings import load_settings, save_settings
 from link_info import read_link_info
 from chapters import Chapter
 from chapter_panel import ChapterPanel
+from download import build_download_plan
 
 app_version = "1.0.1"
 
@@ -231,17 +233,22 @@ class MainWindow:
         if not self.entDownloadFolder.get().strip():
             messagebox.showerror("Download", "Choose a save folder first.", parent=self.root)
             return
+        split_mode = self.chapter_editor.mode.get() if self.show_chapters.get() else None
+        try:
+            plan = build_download_plan(
+                options_str, self.entDownloadFolder.get(), self.entTitleSheme.get(),
+                self.settings.ffmpeg_path, split_mode,
+            )
+        except ValueError as error:
+            self.append_console_line(f"{error}\n")
+            return
         self.save_download_folder()
         self.save_options(options_str)
-        dl_path = os.path.join(self.entDownloadFolder.get(), self.entTitleSheme.get())
-        options = options_str.split(" ") if options_str else []
-        options += ["-o", dl_path]
-        options += ["--ffmpeg-location", self.settings.ffmpeg_path]
         proc = ut.exec_youtube_dl(
-            self.settings.youtube_dl_path, link, *options,
+            self.settings.youtube_dl_path, *plan.options, "--", link,
             js_runtime_path=self.settings.js_runtime_path,
         )
-        self.__redirect_out(proc)
+        self.__redirect_out(proc, plan.postprocess if plan.postprocessors else None)
 
     def exec_options(self, options_str):
         self.save_options(options_str)
@@ -293,7 +300,7 @@ class MainWindow:
     def _chapters_edited(self, chapters: list[Chapter]) -> None:
         self.chapters = chapters
 
-    def __redirect_out(self, proc: subprocess.Popen):
+    def __redirect_out(self, proc: subprocess.Popen, on_success: Callable[[], None] | None = None):
         # read youtube-dl output and redirect to the console
         t_out = Thread(
             target=ut.read_output,
@@ -308,6 +315,19 @@ class MainWindow:
             kwargs={"out_append": self.append_console_line, "out_replace": self.replace_last_console_line},
         )
         t_errs.start()
+
+        if on_success is not None:
+            def finish_download():
+                returncode = proc.wait()
+                t_out.join()
+                t_errs.join()
+                if returncode == 0:
+                    try:
+                        on_success()
+                    except Exception as error:
+                        self.append_console_line(f"Postprocessing failed: {error}\n")
+
+            Thread(target=finish_download).start()
 
     def on_closing(self):
         self.settings.window_size = f"{self.root.winfo_width()}x{self.root.winfo_height()}"
