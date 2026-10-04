@@ -6,6 +6,7 @@ import math
 import tempfile
 from dataclasses import dataclass, field
 from typing import Callable
+from pathlib import Path
 
 from chapters import Chapter
 from audio_tags import AudioTags
@@ -72,6 +73,13 @@ def build_download_plan(
                 raise ValueError(f"Extended cannot be combined with {option}.")
         plan.workspace = tempfile.TemporaryDirectory(prefix="mingui-download-")
         result_file = os.path.join(plan.workspace.name, "downloaded.jsonl")
+        original_cover = None
+        if selected_tags is not None:
+            original_cover = Path(plan.workspace.name) / "cover.jpg"
+            options += [
+                "--write-thumbnail", "--convert-thumbnails", "jpg",
+                "-o", "thumbnail:" + os.path.join(plan.workspace.name, "cover.%(ext)s"),
+            ]
         options += [
             "--no-split-chapters", "--no-playlist",
             "--print-to-file", "after_move:%(filepath)j", result_file,
@@ -87,7 +95,8 @@ def build_download_plan(
             if selected_tags is None:
                 split_media(paths[0], folder, selected, ffmpeg_path, log)
             else:
-                split_media(paths[0], folder, selected, ffmpeg_path, log, audio_tags=selected_tags)
+                split_media(paths[0], folder, selected, ffmpeg_path, log,
+                            audio_tags=selected_tags, original_cover=original_cover)
 
         plan.postprocessors.append(process_chapters)
     return plan

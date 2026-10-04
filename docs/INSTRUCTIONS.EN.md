@@ -37,11 +37,17 @@ Older `options` strings also need to be changed to lists manually.
 ## Download a video or audio file
 
 For audio tracks, enable **Split media**, request **Link Info** and choose
-**Extended Audio** in the chapter panel. Edit Track, Artist, Title and Album,
+**Extended Audio** in the chapter panel. Edit Track, Artist, Title, Album,
+Year (four digits or empty) and Album Artist,
 as well as the time ranges and Lock. Track numbers appear as `01`, `02`, etc.
+Cover defaults to `<original>`: the video thumbnail is downloaded with the
+media, converted to JPEG and embedded in each selected track. Alternatively,
+enter a path to a JPEG, PNG, GIF or BMP file in Cover. Custom paths are checked
+before downloading; all cover files are read and checked before splitting.
+An invalid or missing cover stops processing with a chapter-specific error.
 Output names are `01 - Artist - Title`; when Artist is empty, `01 - Title`.
 Album is saved as a tag and does not appear in the filename.
-The mode produces MP3 audio only. All four tags are saved using Mutagen,
+The mode produces MP3 audio only. All six tags are saved using Mutagen,
 including the track number with a leading zero, such as `01`.
 
 1. Paste a URL into **Download link**. Right-clicking this field replaces its

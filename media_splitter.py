@@ -11,7 +11,7 @@ import tempfile
 from typing import Callable, Sequence
 
 from chapters import Chapter
-from audio_tags import AudioTags, write_audio_tags
+from audio_tags import AudioTags, CoverImage, cover_path, read_cover, write_audio_tags
 
 
 def _executable(location: str, name: str) -> str:
@@ -42,9 +42,22 @@ def split_media(
     ffmpeg_path: str,
     log: Callable[[str], None],
     *, audio_tags: Sequence[AudioTags] | None = None,
+    original_cover: Path | None = None,
 ) -> None:
     if audio_tags is not None and len(audio_tags) != len(chapters):
         raise ValueError("Each audio chapter needs its own tags.")
+    covers: list[CoverImage] = []
+    if audio_tags is not None:
+        log("[Split media] Validating chapter covers\n")
+        cached: dict[Path, CoverImage] = {}
+        for number, tags in enumerate(audio_tags, 1):
+            try:
+                image_path = cover_path(tags.cover, original_cover)
+                if image_path not in cached:
+                    cached[image_path] = read_cover(image_path)
+                covers.append(cached[image_path])
+            except ValueError as error:
+                raise ValueError(f"Chapter {number}: {error}") from error
     source_path = Path(source).resolve(strict=True)
     ffmpeg = _executable(ffmpeg_path, "ffmpeg")
     ffprobe = _executable(ffmpeg_path, "ffprobe")
@@ -151,7 +164,7 @@ def split_media(
                 raise ValueError(f"FFmpeg produced an empty chapter {number}.")
             if audio_tags is not None:
                 log(f"[Split media] Writing audio tags for track {audio_tags[number - 1].track_text}\n")
-                write_audio_tags(temporary, audio_tags[number - 1])
+                write_audio_tags(temporary, audio_tags[number - 1], covers[number - 1])
             if output.exists():
                 raise ValueError(f"Chapter output already exists: {output}")
             temporary.rename(output)
