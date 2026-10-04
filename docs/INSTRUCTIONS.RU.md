@@ -10,6 +10,10 @@
 
 - `youtube_dl_path`: полный путь к исполняемому файлу загрузчика, например yt-dlp.exe.
 - `ffmpeg_path`: путь к папке с исполняемыми файлами FFmpeg.
+- `js_runtime_path`: необязательный JavaScript runtime в формате yt-dlp
+  `RUNTIME:PATH`, например `deno:C:/Tools/deno/deno.exe` или
+  `node:C:/Program Files/nodejs/node.exe`. Передаётся через `--js-runtimes`
+  для Download, Link Info и Exec. Пустая строка оставляет настройки yt-dlp по умолчанию.
 - `download_dir`: список папок сохранения; первая папка выбирается при
   запуске. Пример: `["C:/Downloads/videos", "D:/Music"]`.
 - `options`: список сохранённых наборов опций; первый выбирается при

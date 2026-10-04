@@ -237,19 +237,27 @@ class MainWindow:
         options = options_str.split(" ") if options_str else []
         options += ["-o", dl_path]
         options += ["--ffmpeg-location", self.settings.ffmpeg_path]
-        proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, link, *options)
+        proc = ut.exec_youtube_dl(
+            self.settings.youtube_dl_path, link, *options,
+            js_runtime_path=self.settings.js_runtime_path,
+        )
         self.__redirect_out(proc)
 
     def exec_options(self, options_str):
         self.save_options(options_str)
         options = options_str.split(" ") if options_str else []
-        proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, *options)
+        proc = ut.exec_youtube_dl(
+            self.settings.youtube_dl_path, *options,
+            js_runtime_path=self.settings.js_runtime_path,
+        )
         self.__redirect_out(proc)
 
     def get_info(self, link):
         link = link.strip()
         self._clear_link_info()
-        proc = ut.exec_get_info(self.settings.youtube_dl_path, link)
+        proc = ut.exec_get_info(
+            self.settings.youtube_dl_path, link, self.settings.js_runtime_path,
+        )
         Thread(
             target=read_link_info,
             args=(proc, self.append_console_line),

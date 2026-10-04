@@ -1,6 +1,7 @@
 {
     "youtube_dl_path": "C:/Tools/yt-dlp/yt-dlp.exe",
     "ffmpeg_path": "C:/Tools/ffmpeg/bin",
+    "js_runtime_path": "deno:C:/Tools/deno/deno.exe",
     "download_dir": [
         "C:/Downloads/youtube-downloads"
     ],

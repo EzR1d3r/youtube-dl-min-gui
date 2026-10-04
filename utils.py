@@ -56,15 +56,17 @@ def parse_colors(color_config: str):
     return opt
 
 #utils
-def exec_youtube_dl(youtube_dl_path, *options) -> subprocess.Popen:
+def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "") -> subprocess.Popen:
     l = list(options)
+    if js_runtime_path.strip():
+        l[0:0] = ["--js-runtimes", js_runtime_path.strip()]
     l.insert(0, youtube_dl_path)
     return subprocess.Popen(l, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-def exec_get_info(youtube_dl_path, link) -> subprocess.Popen:
+def exec_get_info(youtube_dl_path, link, js_runtime_path: str = "") -> subprocess.Popen:
     return exec_youtube_dl(
         youtube_dl_path, "--skip-download", "--no-playlist", "--encoding", "utf-8",
-        "--dump-single-json", "--", link
+        "--dump-single-json", "--", link, js_runtime_path=js_runtime_path
     )
 
 def _readline(obj, newline = (b"\n", b"\r")):
