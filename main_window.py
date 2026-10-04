@@ -11,7 +11,7 @@ import utils as ut
 from settings import load_settings, save_settings
 from link_info import read_link_info
 from chapters import Chapter
-from chapter_editor import ChapterEditor
+from chapter_panel import ChapterPanel
 
 app_version = "1.0.1"
 
@@ -103,7 +103,7 @@ class MainWindow:
         self.btnInfo   = Button(self.fmInfoBlock, text="Link Info", width=20)
         self.show_chapters = BooleanVar(master=self.root, value=False)
         self.chkShowChapters = Checkbutton(
-            self.fmInfoBlock, text="Show chapters", variable=self.show_chapters,
+            self.fmInfoBlock, text="Split media", variable=self.show_chapters,
             command=self._toggle_chapters, bg=blocks_color,
         )
         self.btnClearConsole = Button(self.fmInfoBlock, text="Clear output", width=20)
@@ -119,7 +119,7 @@ class MainWindow:
 
         self.entColors.insert(0, self.settings.colors)
 
-        self.chapter_editor = ChapterEditor(self.root, on_change=self._chapters_edited)
+        self.chapter_editor = ChapterPanel(self.root, on_change=self._chapters_edited)
         self.chapter_editor.grid(row=2, column=0, columnspan=3, sticky="WE", padx=10, pady=(0, 10))
         self.chapter_editor.grid_remove()
 

@@ -18,9 +18,9 @@ class ChapterRow:
     locked: tk.BooleanVar
 
 
-class ChapterEditor(ttk.LabelFrame):
+class ChapterEditor(ttk.Frame):
     def __init__(self, master, on_change: Callable[[list[Chapter]], None]):
-        super().__init__(master, text="Chapters")
+        super().__init__(master)
         self.on_change = on_change
         self.rows: list[ChapterRow] = []
         self._updating = False
