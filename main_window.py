@@ -235,10 +235,12 @@ class MainWindow:
             return
         split_mode = self.chapter_editor.mode.get() if self.show_chapters.get() else None
         try:
-            chapters = self.chapter_editor.get_chapters() if split_mode == "Extended" else None
+            chapters = self.chapter_editor.get_chapters() if split_mode in ("Extended", "Extended Audio") else None
+            audio_tags = self.chapter_editor.get_audio_tags() if split_mode == "Extended Audio" else None
             plan = build_download_plan(
                 options_str, self.entDownloadFolder.get(), self.entTitleSheme.get(),
                 self.settings.ffmpeg_path, split_mode, chapters, self.append_console_line,
+                audio_tags=audio_tags,
             )
         except ValueError as error:
             self.append_console_line(f"{error}\n")

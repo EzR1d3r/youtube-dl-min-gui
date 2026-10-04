@@ -27,6 +27,7 @@ installed separately and are not included in this repository.
 
 1. Clone the repository and open its directory.
 2. Install the downloader and FFmpeg.
+   Install Python dependencies with `python -m pip install -r requirements.txt`.
 3. Copy the example configuration:
 
    ```powershell

@@ -6,6 +6,8 @@ from typing import Callable
 
 from chapters import Chapter
 from chapter_editor import ChapterEditor
+from audio_editor import AudioChapterEditor
+from audio_tags import AudioTags
 from time_spinbox import format_time, seconds_to_milliseconds
 
 
@@ -55,7 +57,7 @@ class ChapterPanel(ttk.LabelFrame):
         ttk.Label(toolbar, text="Mode:").pack(side="left", padx=(0, 8))
         self.mode = tk.StringVar(master=self, value="Default")
         selector = ttk.Combobox(
-            toolbar, textvariable=self.mode, values=("Default", "Extended"),
+            toolbar, textvariable=self.mode, values=("Default", "Extended", "Extended Audio"),
             state="readonly", width=18,
         )
         selector.pack(side="left")
@@ -63,7 +65,8 @@ class ChapterPanel(ttk.LabelFrame):
 
         self.default = ChapterList(self)
         self.extended = ChapterEditor(self, on_change=self._extended_changed)
-        self.views = {"Default": self.default, "Extended": self.extended}
+        self.audio = AudioChapterEditor(self, on_change=self._audio_changed)
+        self.views = {"Default": self.default, "Extended": self.extended, "Extended Audio": self.audio}
         for view in self.views.values():
             view.grid(row=1, column=0, sticky="nsew")
             view.grid_remove()
@@ -73,12 +76,20 @@ class ChapterPanel(ttk.LabelFrame):
         self._original = list(chapters)
         self.default.set_chapters(chapters)
         self.extended.set_chapters(chapters)
+        self.audio.set_chapters(chapters)
         self._switch_mode()
 
     def get_chapters(self) -> list[Chapter]:
         if self.mode.get() == "Default":
             return list(self._original)
-        return self.extended.get_chapters()
+        return self.views[self.mode.get()].get_chapters()
+
+    def get_audio_tags(self) -> list[AudioTags]:
+        return self.audio.get_audio_tags()
+
+    def _audio_changed(self, chapters: list[Chapter]) -> None:
+        if self.mode.get() == "Extended Audio":
+            self.on_change(chapters)
 
     def _extended_changed(self, chapters: list[Chapter]) -> None:
         if self.mode.get() == "Extended":
@@ -90,5 +101,5 @@ class ChapterPanel(ttk.LabelFrame):
         self.views[self.mode.get()].grid()
         # Publish accepted edits only; incomplete input stays in the editor.
         chapters = (list(self._original) if self.mode.get() == "Default"
-                    else [row.chapter for row in self.extended.rows])
+                    else [row.chapter for row in self.views[self.mode.get()].rows])
         self.on_change(chapters)

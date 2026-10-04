@@ -11,6 +11,7 @@ import tempfile
 from typing import Callable, Sequence
 
 from chapters import Chapter
+from audio_tags import AudioTags, write_audio_tags
 
 
 def _executable(location: str, name: str) -> str:
@@ -40,7 +41,10 @@ def split_media(
     chapters: Sequence[Chapter],
     ffmpeg_path: str,
     log: Callable[[str], None],
+    *, audio_tags: Sequence[AudioTags] | None = None,
 ) -> None:
+    if audio_tags is not None and len(audio_tags) != len(chapters):
+        raise ValueError("Each audio chapter needs its own tags.")
     source_path = Path(source).resolve(strict=True)
     ffmpeg = _executable(ffmpeg_path, "ffmpeg")
     ffprobe = _executable(ffmpeg_path, "ffprobe")
@@ -57,6 +61,10 @@ def split_media(
     video = next((stream for stream in streams if stream.get("codec_type") == "video"
                   and not stream.get("disposition", {}).get("attached_pic")), None)
     audio = next((stream for stream in streams if stream.get("codec_type") == "audio"), None)
+    if audio_tags is not None:
+        if audio is None:
+            raise ValueError("Extended Audio requires an audio stream.")
+        video = None
     if video is None and audio is None:
         raise ValueError("The downloaded file has no video or audio stream.")
     duration = metadata.get("format", {}).get("duration")
@@ -69,10 +77,37 @@ def split_media(
                     raise ValueError(f"Chapter {number} ends beyond the downloaded file "
                                      f"({duration:.2f} s).")
 
-    extension = ".mp4" if video else (".mp3" if source_path.suffix.lower() == ".mp3" else ".m4a")
-    outputs = [Path(folder) / (
-        f"{source_path.stem[:100]} - {number:03d} - {_safe_title(chapter.title)}{extension}"
-    ) for number, chapter in enumerate(chapters, 1)]
+    extension = ".mp4" if video else ".mp3"
+    audio_encoding = ["-c:a", "aac", "-b:a", "192k"]
+    if extension == ".mp3":
+        try:
+            source_bitrate = int(audio.get("bit_rate", 0))
+        except (TypeError, ValueError):
+            source_bitrate = 0
+        if source_bitrate > 0:
+            # MP3 needs a supported bitrate; VBR sources report an average.
+            supported = (8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320)
+            bitrate = min(supported, key=lambda value: abs(value * 1000 - source_bitrate))
+            audio_encoding = ["-c:a", "libmp3lame", "-b:a", f"{bitrate}k"]
+            log(f"[Split media] Source audio bitrate: {source_bitrate / 1000:.1f} kbps; "
+                f"MP3 target: {bitrate} kbps\n")
+        else:
+            audio_encoding = ["-c:a", "libmp3lame", "-q:a", "2"]
+            log("[Split media] Source audio bitrate is unknown; using MP3 VBR quality 2\n")
+    outputs = []
+    for number, chapter in enumerate(chapters, 1):
+        if audio_tags is None:
+            filename = f"{source_path.stem[:100]} - {number:03d} - {_safe_title(chapter.title)}"
+        else:
+            tags = audio_tags[number - 1]
+            parts = [tags.track_text]
+            if tags.artist:
+                parts.append(_safe_title(tags.artist))
+            parts.append(_safe_title(tags.title))
+            filename = " - ".join(parts)
+        outputs.append(Path(folder) / (filename + extension))
+    if len(set(outputs)) != len(outputs):
+        raise ValueError("Chapter filenames must be unique; check Track, Artist and Title.")
     for output in outputs:
         if output.exists():
             raise ValueError(f"Chapter output already exists: {output}")
@@ -98,9 +133,8 @@ def split_media(
                 ]
             if audio:
                 command += ["-map", f"0:{audio['index']}"]
-                command += (["-c:a", "libmp3lame", "-q:a", "2"] if extension == ".mp3"
-                            else ["-c:a", "aac", "-b:a", "192k"])
-            if extension in {".mp4", ".m4a"}:
+                command += audio_encoding
+            if extension == ".mp4":
                 command += ["-movflags", "+faststart"]
             command += [str(temporary)]
             log(f"[Split media] Chapter {number}/{len(chapters)}: {chapter.title} "
@@ -115,6 +149,9 @@ def split_media(
                     raise ValueError(f"FFmpeg failed while processing chapter {number}.")
             if not temporary.is_file() or temporary.stat().st_size == 0:
                 raise ValueError(f"FFmpeg produced an empty chapter {number}.")
+            if audio_tags is not None:
+                log(f"[Split media] Writing audio tags for track {audio_tags[number - 1].track_text}\n")
+                write_audio_tags(temporary, audio_tags[number - 1])
             if output.exists():
                 raise ValueError(f"Chapter output already exists: {output}")
             temporary.rename(output)

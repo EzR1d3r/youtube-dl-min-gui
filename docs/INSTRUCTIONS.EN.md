@@ -8,6 +8,9 @@ Install a youtube-dl-compatible downloader and FFmpeg separately. Copy
 `.settings.example.json` to `.settings.json` beside `app.py` (or beside the built
 EXE), then edit the paths before starting the application.
 
+When running from source, install dependencies with
+`python -m pip install -r requirements.txt`. Mutagen is used to write audio tags.
+
 - `youtube_dl_path`: full path to the downloader executable, such as yt-dlp.exe.
 - `ffmpeg_path`: path to the directory containing FFmpeg executables.
 - `js_runtime_path`: optional JavaScript runtime in yt-dlp's `RUNTIME:PATH`
@@ -32,6 +35,14 @@ replace it with a list manually. Automatic migration is not provided.
 Older `options` strings also need to be changed to lists manually.
 
 ## Download a video or audio file
+
+For audio tracks, enable **Split media**, request **Link Info** and choose
+**Extended Audio** in the chapter panel. Edit Track, Artist, Title and Album,
+as well as the time ranges and Lock. Track numbers appear as `01`, `02`, etc.
+Output names are `01 - Artist - Title`; when Artist is empty, `01 - Title`.
+Album is saved as a tag and does not appear in the filename.
+The mode produces MP3 audio only. All four tags are saved using Mutagen,
+including the track number with a leading zero, such as `01`.
 
 1. Paste a URL into **Download link**. Right-clicking this field replaces its
    contents with the clipboard text.

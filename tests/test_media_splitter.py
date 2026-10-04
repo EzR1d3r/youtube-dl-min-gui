@@ -68,15 +68,15 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
         self.assertEqual(len(outputs), 1)
         self.assert_media(outputs[0], 1.10, ['mp3'])
 
-    def test_other_audio_is_encoded_as_m4a_and_bad_range_is_rejected(self):
+    def test_other_audio_is_encoded_as_mp3_and_bad_range_is_rejected(self):
         source = self.folder / 'audio.wav'
         self.run_ffmpeg('-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000',
                         '-t', '3', str(source))
         split_media(str(source), str(self.folder), [Chapter('Trimmed', 0.30, 1.40)],
                     self.location, self.logs.append)
-        outputs = list(self.folder.glob('audio - *.m4a'))
+        outputs = list(self.folder.glob('audio - *.mp3'))
         self.assertEqual(len(outputs), 1)
-        self.assert_media(outputs[0], 1.10, ['aac'])
+        self.assert_media(outputs[0], 1.10, ['mp3'])
         with self.assertRaisesRegex(ValueError, 'beyond'):
             split_media(str(source), str(self.folder), [Chapter('Bad', 0, 8)],
                         self.location, self.logs.append)

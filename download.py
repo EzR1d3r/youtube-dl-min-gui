@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from chapters import Chapter
+from audio_tags import AudioTags
 from media_splitter import split_media
 
 
@@ -34,8 +35,9 @@ def build_download_plan(
     split_mode: str | None = None,
     chapters: list[Chapter] | None = None,
     log: Callable[[str], None] = print,
+    audio_tags: list[AudioTags] | None = None,
 ) -> DownloadPlan:
-    if split_mode not in (None, "Default", "Extended"):
+    if split_mode not in (None, "Default", "Extended", "Extended Audio"):
         raise ValueError(f"Splitting in {split_mode} mode is not implemented yet.")
 
     folder = os.path.abspath(os.path.expanduser(folder))
@@ -50,10 +52,14 @@ def build_download_plan(
     chapter_template = "%(title)s - %(section_number)03d - %(section_title)s.%(ext)s"
     options += ["-o", "chapter:" + os.path.join(folder, chapter_template)]
     plan = DownloadPlan(options)
-    if split_mode == "Extended":
+    if split_mode in ("Extended", "Extended Audio"):
         selected = tuple(chapters or [])
+        selected_tags = tuple(audio_tags or []) if split_mode == "Extended Audio" else None
         if not selected:
-            raise ValueError("Extended: request Link Info before downloading.")
+            raise ValueError(f"{split_mode}: request Link Info before downloading.")
+        if selected_tags is not None:
+            if len(selected_tags) != len(selected):
+                raise ValueError("Extended Audio requires tags for every chapter.")
         for number, chapter in enumerate(selected, 1):
             if not (math.isfinite(chapter.start_time) and math.isfinite(chapter.end_time)
                     and 0 <= chapter.start_time < chapter.end_time):
@@ -78,7 +84,10 @@ def build_download_plan(
                 paths = [json.loads(line) for line in file if line.strip()]
             if len(paths) != 1 or not isinstance(paths[0], str):
                 raise ValueError("Extended requires a single downloaded media file.")
-            split_media(paths[0], folder, selected, ffmpeg_path, log)
+            if selected_tags is None:
+                split_media(paths[0], folder, selected, ffmpeg_path, log)
+            else:
+                split_media(paths[0], folder, selected, ffmpeg_path, log, audio_tags=selected_tags)
 
         plan.postprocessors.append(process_chapters)
     return plan

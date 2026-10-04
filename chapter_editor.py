@@ -19,6 +19,10 @@ class ChapterRow:
 
 
 class ChapterEditor(ttk.Frame):
+    headings = ("#", "Chapter", "Start", "End", "Lock")
+    time_columns = (2, 3)
+    lock_column = 4
+
     def __init__(self, master, on_change: Callable[[list[Chapter]], None]):
         super().__init__(master)
         self.on_change = on_change
@@ -33,6 +37,9 @@ class ChapterEditor(ttk.Frame):
         self.canvas.configure(yscrollcommand=scroll.set)
         self.canvas.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
+        horizontal = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        self.canvas.configure(xscrollcommand=horizontal.set)
+        horizontal.grid(row=1, column=0, sticky="ew")
         self.body = ttk.Frame(self.canvas)
         self.body.columnconfigure(1, weight=1)
         self.body_window = self.canvas.create_window(0, 0, window=self.body, anchor="nw")
@@ -45,7 +52,7 @@ class ChapterEditor(ttk.Frame):
         for widget in self.body.winfo_children():
             widget.destroy()
         self.rows.clear()
-        for column, heading in enumerate(["#", "Chapter", "Start", "End", "Lock"]):
+        for column, heading in enumerate(self.headings):
             ttk.Label(self.body, text=heading).grid(row=0, column=column, sticky="w", padx=8, pady=4)
         maximum = max((chapter.end_time for chapter in chapters), default=1)
         maximum_ms = seconds_to_milliseconds(maximum)
@@ -61,9 +68,9 @@ class ChapterEditor(ttk.Frame):
                 tk.BooleanVar(master=self, value=True),
             )
             self.rows.append(row)
-            ttk.Label(self.body, text=str(number)).grid(row=number, column=0, sticky="w", padx=8, pady=4)
-            ttk.Label(self.body, text=chapter.title).grid(row=number, column=1, sticky="w", padx=8, pady=4)
-            for column, field, variable in [(2, "start", row.start), (3, "end", row.end)]:
+            self._add_identity_widgets(number, row)
+            for column, field, variable in [(self.time_columns[0], "start", row.start),
+                                             (self.time_columns[1], "end", row.end)]:
                 spinbox = TimeSpinbox(
                     self.body, textvariable=variable, maximum_ms=maximum_ms
                 )
@@ -73,7 +80,7 @@ class ChapterEditor(ttk.Frame):
                 spinbox.bind("<FocusOut>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
                 spinbox.bind("<Return>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
             lock = ttk.Checkbutton(self.body, variable=row.locked, command=lambda i=number - 1: self._lock_changed(i))
-            lock.grid(row=number, column=4, padx=8, pady=4)
+            lock.grid(row=number, column=self.lock_column, padx=8, pady=4)
             if number == len(chapters):
                 lock.state(["disabled"])
         for widget in self.body.winfo_children():
@@ -89,8 +96,15 @@ class ChapterEditor(ttk.Frame):
             except ValueError as error:
                 raise ValueError(f"Chapter {number}: enter HH:MM:SS:CC") from error
             self._validate_times(start, end, number)
-            chapters.append(Chapter(row.chapter.title, start, end))
+            chapters.append(Chapter(self._chapter_title(number - 1, row), start, end))
         return chapters
+
+    def _add_identity_widgets(self, number: int, row: ChapterRow) -> None:
+        ttk.Label(self.body, text=str(number)).grid(row=number, column=0, sticky="w", padx=8, pady=4)
+        ttk.Label(self.body, text=row.chapter.title).grid(row=number, column=1, sticky="w", padx=8, pady=4)
+
+    def _chapter_title(self, index: int, row: ChapterRow) -> str:
+        return row.chapter.title
 
     def _validate_times(self, start: float, end: float, number: int) -> None:
         if not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end <= self._maximum:
@@ -149,7 +163,7 @@ class ChapterEditor(ttk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"), height=min(self.body.winfo_reqheight(), 220))
 
     def _resize_width(self, event) -> None:
-        self.canvas.itemconfigure(self.body_window, width=event.width)
+        self.canvas.itemconfigure(self.body_window, width=max(event.width, self.body.winfo_reqwidth()))
 
     def _scroll(self, event) -> str:
         if event.delta:
