@@ -46,11 +46,14 @@ def split_media(
 ) -> None:
     if audio_tags is not None and len(audio_tags) != len(chapters):
         raise ValueError("Each audio chapter needs its own tags.")
-    covers: list[CoverImage] = []
+    covers: list[CoverImage | None] = []
     if audio_tags is not None:
         log("[Split media] Validating chapter covers\n")
         cached: dict[Path, CoverImage] = {}
         for number, tags in enumerate(audio_tags, 1):
+            if not tags.cover:
+                covers.append(None)
+                continue
             try:
                 image_path = cover_path(tags.cover, original_cover)
                 if image_path not in cached:

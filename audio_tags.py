@@ -80,8 +80,8 @@ def write_audio_tags(path: Path, tags: AudioTags, cover: CoverImage | None = Non
         metadata.delall(key)
         if value:
             metadata.add(frame(encoding=3, text=[value]))
+    metadata.delall("APIC")
     if cover is not None:
-        metadata.delall("APIC")
         metadata.add(APIC(encoding=3, mime=cover.mime, type=PictureType.COVER_FRONT,
                           desc="Cover", data=cover.data))
     metadata.update_to_v23()

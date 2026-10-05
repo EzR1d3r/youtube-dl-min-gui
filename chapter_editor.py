@@ -52,8 +52,7 @@ class ChapterEditor(ttk.Frame):
         for widget in self.body.winfo_children():
             widget.destroy()
         self.rows.clear()
-        for column, heading in enumerate(self.headings):
-            ttk.Label(self.body, text=heading).grid(row=0, column=column, sticky="w", padx=8, pady=4)
+        self._add_headers()
         maximum = max((chapter.end_time for chapter in chapters), default=1)
         maximum_ms = seconds_to_milliseconds(maximum)
         self._maximum = maximum_ms / 1000
@@ -102,6 +101,10 @@ class ChapterEditor(ttk.Frame):
     def _add_identity_widgets(self, number: int, row: ChapterRow) -> None:
         ttk.Label(self.body, text=str(number)).grid(row=number, column=0, sticky="w", padx=8, pady=4)
         ttk.Label(self.body, text=row.chapter.title).grid(row=number, column=1, sticky="w", padx=8, pady=4)
+
+    def _add_headers(self) -> None:
+        for column, heading in enumerate(self.headings):
+            ttk.Label(self.body, text=heading).grid(row=0, column=column, sticky="w", padx=8, pady=4)
 
     def _chapter_title(self, index: int, row: ChapterRow) -> str:
         return row.chapter.title

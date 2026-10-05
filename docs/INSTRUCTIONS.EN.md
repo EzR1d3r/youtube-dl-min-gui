@@ -42,9 +42,17 @@ Year (four digits or empty) and Album Artist,
 as well as the time ranges and Lock. Track numbers appear as `01`, `02`, etc.
 Cover defaults to `<original>`: the video thumbnail is downloaded with the
 media, converted to JPEG and embedded in each selected track. Alternatively,
-enter a path to a JPEG, PNG, GIF or BMP file in Cover. Custom paths are checked
+enter a path to a JPEG, PNG, GIF or BMP file in Cover, or leave it empty for
+no cover. Custom paths are checked
 before downloading; all cover files are read and checked before splitting.
 An invalid or missing cover stops processing with a chapter-specific error.
+Use the leftmost checkboxes to select segments for bulk editing; **All** selects
+or clears every row. The **…** button beside a column heading opens an editor
+that applies its value to the selected rows. Beside the Cover input, **X** clears
+the cover, **O** selects `<original>`, and **…** opens a file dialog. Hover over
+these buttons for hints. Bulk editing applies to tag columns only;
+Start, End and Lock are edited per row. Selection controls editing only; Download
+still processes all segments.
 Output names are `01 - Artist - Title`; when Artist is empty, `01 - Title`.
 Album is saved as a tag and does not appear in the filename.
 The mode produces MP3 audio only. All six tags are saved using Mutagen,
