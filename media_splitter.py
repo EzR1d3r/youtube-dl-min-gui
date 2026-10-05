@@ -7,7 +7,6 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-import tempfile
 from typing import Callable, Sequence
 
 from chapters import Chapter
@@ -41,7 +40,8 @@ def split_media(
     chapters: Sequence[Chapter],
     ffmpeg_path: str,
     log: Callable[[str], None],
-    *, audio_tags: Sequence[AudioTags] | None = None,
+    *, workspace: Path,
+    audio_tags: Sequence[AudioTags] | None = None,
     original_cover: Path | None = None,
 ) -> None:
     if audio_tags is not None and len(audio_tags) != len(chapters):
@@ -127,46 +127,45 @@ def split_media(
 
     os.makedirs(folder, exist_ok=True)
     log(f"[Split media] Re-encoding {len(chapters)} chapters\n")
-    # Only completed files receive their final names; failures leave no partial chapter.
-    with tempfile.TemporaryDirectory(prefix=".mingui-chapters-", dir=folder) as workspace:
-        for number, (chapter, output) in enumerate(zip(chapters, outputs), 1):
-            temporary = Path(workspace) / f"{number:03d}{extension}"
-            command = [
-                ffmpeg, "-hide_banner", "-nostdin", "-y", "-nostats",
-                "-abort_on", "empty_output", "-accurate_seek",
-                "-ss", f"{chapter.start_time:.3f}", "-i", str(source_path),
-                "-t", f"{chapter.end_time - chapter.start_time:.3f}",
-                "-map_metadata", "0", "-map_chapters", "-1",
+    # The download plan owns the workspace and removes it after success or failure.
+    for number, (chapter, output) in enumerate(zip(chapters, outputs), 1):
+        temporary = workspace / f"{number:03d}{extension}"
+        command = [
+            ffmpeg, "-hide_banner", "-nostdin", "-y", "-nostats",
+            "-abort_on", "empty_output", "-accurate_seek",
+            "-ss", f"{chapter.start_time:.3f}", "-i", str(source_path),
+            "-t", f"{chapter.end_time - chapter.start_time:.3f}",
+            "-map_metadata", "0", "-map_chapters", "-1",
+        ]
+        if video:
+            command += [
+                "-map", f"0:{video['index']}", "-c:v", "libx264",
+                "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
             ]
-            if video:
-                command += [
-                    "-map", f"0:{video['index']}", "-c:v", "libx264",
-                    "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-                    "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-                ]
-            if audio:
-                command += ["-map", f"0:{audio['index']}"]
-                command += audio_encoding
-            if extension == ".mp4":
-                command += ["-movflags", "+faststart"]
-            command += [str(temporary)]
-            log(f"[Split media] Chapter {number}/{len(chapters)}: {chapter.title} "
-                f"({chapter.start_time:.2f}–{chapter.end_time:.2f} s)\n")
-            with subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, encoding="utf-8", errors="replace",
-            ) as process:
-                for line in process.stdout:
-                    log(line)
-                if process.wait() != 0:
-                    raise ValueError(f"FFmpeg failed while processing chapter {number}.")
-            if not temporary.is_file() or temporary.stat().st_size == 0:
-                raise ValueError(f"FFmpeg produced an empty chapter {number}.")
-            if audio_tags is not None:
-                log(f"[Split media] Writing audio tags for track {audio_tags[number - 1].track_text}\n")
-                write_audio_tags(temporary, audio_tags[number - 1], covers[number - 1])
-            if output.exists():
-                raise ValueError(f"Chapter output already exists: {output}")
-            temporary.rename(output)
-            log(f"[Split media] Saved {output}\n")
+        if audio:
+            command += ["-map", f"0:{audio['index']}"]
+            command += audio_encoding
+        if extension == ".mp4":
+            command += ["-movflags", "+faststart"]
+        command += [str(temporary)]
+        log(f"[Split media] Chapter {number}/{len(chapters)}: {chapter.title} "
+            f"({chapter.start_time:.2f}–{chapter.end_time:.2f} s)\n")
+        with subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace",
+        ) as process:
+            for line in process.stdout:
+                log(line)
+            if process.wait() != 0:
+                raise ValueError(f"FFmpeg failed while processing chapter {number}.")
+        if not temporary.is_file() or temporary.stat().st_size == 0:
+            raise ValueError(f"FFmpeg produced an empty chapter {number}.")
+        if audio_tags is not None:
+            log(f"[Split media] Writing audio tags for track {audio_tags[number - 1].track_text}\n")
+            write_audio_tags(temporary, audio_tags[number - 1], covers[number - 1])
+        if output.exists():
+            raise ValueError(f"Chapter output already exists: {output}")
+        temporary.rename(output)
+        log(f"[Split media] Saved {output}\n")
     log("[Split media] Finished. The original file was kept.\n")

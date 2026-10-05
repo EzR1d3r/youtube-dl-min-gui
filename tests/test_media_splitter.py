@@ -23,6 +23,8 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
         self.workspace = tempfile.TemporaryDirectory(prefix='mingui-test-')
         self.addCleanup(self.workspace.cleanup)
         self.folder = Path(self.workspace.name)
+        self.processing = self.folder / 'processing'
+        self.processing.mkdir()
         self.logs = []
 
     def run_ffmpeg(self, *arguments):
@@ -47,15 +49,17 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
                         '-t', '3', '-c:v', 'libx264', '-c:a', 'aac', str(source))
         original = source.read_bytes()
         chapters = [Chapter('First / part', 0.30, 1.40), Chapter('Second', 1.40, 2.30)]
-        split_media(str(source), str(self.folder), chapters, self.location, self.logs.append)
+        split_media(str(source), str(self.folder), chapters, self.location, self.logs.append,
+                    workspace=self.processing)
         outputs = sorted(self.folder.glob('source - *.mp4'))
         self.assertEqual(len(outputs), 2)
         self.assert_media(outputs[0], 1.10, ['h264', 'aac'])
         self.assert_media(outputs[1], 0.90, ['h264', 'aac'])
         self.assertEqual(source.read_bytes(), original)
         with self.assertRaisesRegex(ValueError, 'already exists'):
-            split_media(str(source), str(self.folder), chapters, self.location, self.logs.append)
-        self.assertFalse(list(self.folder.glob('.mingui-chapters-*')))
+            split_media(str(source), str(self.folder), chapters, self.location, self.logs.append,
+                        workspace=self.processing)
+        self.assertFalse(list(self.processing.iterdir()))
         self.assertIn('Finished', ''.join(self.logs))
 
     def test_single_range_without_source_chapters_trims_mp3(self):
@@ -63,7 +67,7 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
         self.run_ffmpeg('-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000',
                         '-t', '3', '-c:a', 'libmp3lame', str(source))
         split_media(str(source), str(self.folder), [Chapter('Trimmed', 0.30, 1.40)],
-                    self.location, self.logs.append)
+                    self.location, self.logs.append, workspace=self.processing)
         outputs = list(self.folder.glob('audio - *.mp3'))
         self.assertEqual(len(outputs), 1)
         self.assert_media(outputs[0], 1.10, ['mp3'])
@@ -73,10 +77,10 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
         self.run_ffmpeg('-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000',
                         '-t', '3', str(source))
         split_media(str(source), str(self.folder), [Chapter('Trimmed', 0.30, 1.40)],
-                    self.location, self.logs.append)
+                    self.location, self.logs.append, workspace=self.processing)
         outputs = list(self.folder.glob('audio - *.mp3'))
         self.assertEqual(len(outputs), 1)
         self.assert_media(outputs[0], 1.10, ['mp3'])
         with self.assertRaisesRegex(ValueError, 'beyond'):
             split_media(str(source), str(self.folder), [Chapter('Bad', 0, 8)],
-                        self.location, self.logs.append)
+                        self.location, self.logs.append, workspace=self.processing)

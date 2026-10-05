@@ -71,14 +71,16 @@ def build_download_plan(
                 "--download-sections", "--remove-chapters", "--sponsorblock-remove",
             }:
                 raise ValueError(f"Extended cannot be combined with {option}.")
-        plan.workspace = tempfile.TemporaryDirectory(prefix="mingui-download-")
-        result_file = os.path.join(plan.workspace.name, "downloaded.jsonl")
+        os.makedirs(folder, exist_ok=True)
+        plan.workspace = tempfile.TemporaryDirectory(prefix=".mingui-download-", dir=folder)
+        workspace = Path(plan.workspace.name)
+        result_file = str(workspace / "downloaded.jsonl")
         original_cover = None
         if selected_tags is not None:
-            original_cover = Path(plan.workspace.name) / "cover.jpg"
+            original_cover = workspace / "cover.jpg"
             options += [
                 "--write-thumbnail", "--convert-thumbnails", "jpg",
-                "-o", "thumbnail:" + os.path.join(plan.workspace.name, "cover.%(ext)s"),
+                "-o", "thumbnail:" + str(workspace / "cover.%(ext)s"),
             ]
         options += [
             "--no-split-chapters", "--no-playlist",
@@ -93,10 +95,10 @@ def build_download_plan(
             if len(paths) != 1 or not isinstance(paths[0], str):
                 raise ValueError("Extended requires a single downloaded media file.")
             if selected_tags is None:
-                split_media(paths[0], folder, selected, ffmpeg_path, log)
+                split_media(paths[0], folder, selected, ffmpeg_path, log, workspace=workspace)
             else:
                 split_media(paths[0], folder, selected, ffmpeg_path, log,
-                            audio_tags=selected_tags, original_cover=original_cover)
+                            workspace=workspace, audio_tags=selected_tags, original_cover=original_cover)
 
         plan.postprocessors.append(process_chapters)
     return plan
