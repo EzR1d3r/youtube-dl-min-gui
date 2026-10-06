@@ -1,6 +1,6 @@
-# Amanita Downloader
+# <img src="amanita_logo.png" alt="Amanita Downloader" width="52"> Amanita Downloader
 
-![Amanita Downloader logo](amanita_logo.png)
+## Description
 
 A small Tkinter desktop interface for youtube-dl-compatible downloaders, including
 yt-dlp. Paste a URL, inspect available formats, choose an output folder and start
@@ -10,9 +10,10 @@ a download. Downloader output and errors appear in the application console.
 
 - Video and audio downloads through an external downloader executable.
 - Format inspection and editable command-line options with saved presets.
+- Advanced media splitting by chapters or editable time ranges with FFmpeg.
+- MP3 tag and cover editing, including bulk updates across selected segments.
 - Editable output-folder dropdown with saved history and **+** / **−** buttons.
 - Output filename templates and configurable console colors and fonts.
-- English and Russian startup instructions.
 
 ## Requirements
 
