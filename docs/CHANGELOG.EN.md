@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (Unreleased)
+## 1.1.0
 
 - Show available formats as a table with "Link Info".
 - Add "Split media" with three modes: "Default" splits original chapters; "Extended" trims or splits editable time ranges; "Extended Audio" saves MP3 tracks with editable tags, covers and bulk tag editing.
