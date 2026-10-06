@@ -14,8 +14,22 @@ START = "1.0" #start index for text item
 LAST_LINE = ("end-1l", END)
 PENULTIMATE_LINE = ("end-2l", "end-1l")
 
-enter_point_fname = os.path.realpath(sys.argv[0])
+enter_point_fname = os.path.realpath(sys.executable if getattr(sys, "frozen", False) else sys.argv[0])
 app_root_dir = os.path.dirname(enter_point_fname)
+
+
+def resolve_app_path(path: str) -> str:
+    path = os.path.expanduser(path.strip())
+    if not path or os.path.isabs(path):
+        return path
+    return os.path.normpath(os.path.join(app_root_dir, path))
+
+
+def resolve_js_runtime(value: str) -> str:
+    runtime, separator, path = value.strip().partition(":")
+    if not separator or not path:
+        return value.strip()
+    return runtime + ":" + resolve_app_path(path)
 
 #gui utils
 def _post_format(text_item: Text, text_line, contains=None):
@@ -78,8 +92,8 @@ def program_version(program: str, version_option: str = "--version") -> str:
 def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "") -> subprocess.Popen:
     l = list(options)
     if js_runtime_path.strip():
-        l[0:0] = ["--js-runtimes", js_runtime_path.strip()]
-    l.insert(0, youtube_dl_path)
+        l[0:0] = ["--js-runtimes", resolve_js_runtime(js_runtime_path)]
+    l.insert(0, resolve_app_path(youtube_dl_path))
     return subprocess.Popen(l, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 def exec_get_info(youtube_dl_path, link, js_runtime_path: str = "") -> subprocess.Popen:

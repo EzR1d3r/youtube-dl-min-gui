@@ -11,6 +11,7 @@ from pathlib import Path
 from chapters import Chapter
 from audio_tags import AudioTags
 from media_splitter import split_media
+from utils import resolve_app_path
 
 
 @dataclass
@@ -41,6 +42,7 @@ def build_download_plan(
     if split_mode not in (None, "Default", "Extended", "Extended Audio"):
         raise ValueError(f"Splitting in {split_mode} mode is not implemented yet.")
 
+    ffmpeg_path = resolve_app_path(ffmpeg_path)
     folder = os.path.abspath(os.path.expanduser(folder))
     options = options_str.split()
     options += ["-o", os.path.join(folder, title_template)]

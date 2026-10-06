@@ -46,6 +46,8 @@ updated yourself for reliable operation.
    `ffmpeg_path` to FFmpeg's `bin` directory, `js_runtime_path` to
    `deno:C:/Tools/deno/deno.exe` (using your actual Deno path), and `download_dir`
    to a list of output folders. Use paths that exist on your computer.
+   Tool paths can also be relative to the folder containing `app.py` or the built
+   EXE: `./yt-dlp.exe`, `./ffmpeg/bin` and `deno:./deno.exe`.
 5. Start the application:
 
    ```powershell

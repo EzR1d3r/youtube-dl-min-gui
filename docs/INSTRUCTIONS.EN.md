@@ -17,6 +17,9 @@ When running from source: "python -m pip install -r requirements.txt".
 
 Copy ".settings.example.json" to ".settings.json" beside "app.py" or the EXE.
 Set paths for your computer; use forward slashes in JSON, such as C:/Tools.
+Downloader, FFmpeg and runtime paths may be absolute or relative to the folder
+containing "app.py" (when running from source) or the EXE (in a build).
+Examples: "./yt-dlp.exe", "./ffmpeg/bin", "deno:./deno.exe".
 
 - "youtube_dl_path": downloader executable.
 - "ffmpeg_path": folder containing FFmpeg and FFprobe.

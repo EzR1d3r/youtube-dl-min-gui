@@ -165,23 +165,23 @@ class MainWindow:
         self.show_ascii_logo()
 
         suffix = ".exe" if os.name == "nt" else ""
-        ffmpeg = self.settings.ffmpeg_path.strip()
+        ffmpeg = ut.resolve_app_path(self.settings.ffmpeg_path)
         if os.path.isdir(ffmpeg):
             ffmpeg = os.path.join(ffmpeg, "ffmpeg" + suffix)
         ffmpeg = ffmpeg or "ffmpeg"
 
-        runtime, _, runtime_path = self.settings.js_runtime_path.strip().partition(":")
+        runtime, _, runtime_path = ut.resolve_js_runtime(self.settings.js_runtime_path).partition(":")
         runtime = runtime or "deno"
         if not runtime_path:
             runtime_path = shutil.which(runtime) or os.path.join(
-                os.path.dirname(self.settings.youtube_dl_path), runtime + suffix,
+                os.path.dirname(ut.resolve_app_path(self.settings.youtube_dl_path)), runtime + suffix,
             )
         elif os.path.isdir(runtime_path):
             executable_name = "qjs" if runtime == "quickjs" else runtime
             runtime_path = os.path.join(runtime_path, executable_name + suffix)
 
         for label, program, options in [
-            ("Downloader", self.settings.youtube_dl_path, ()),
+            ("Downloader", ut.resolve_app_path(self.settings.youtube_dl_path), ()),
             ("FFmpeg", ffmpeg, ("-version",)),
             (runtime.capitalize(), runtime_path, ()),
         ]:

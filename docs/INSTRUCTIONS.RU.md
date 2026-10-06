@@ -17,6 +17,9 @@ JavaScript runtime, например Deno. Версии этих програм�
 
 Скопируйте ".settings.example.json" в ".settings.json" рядом с "app.py" или EXE.
 Укажите свои пути; в JSON используйте прямые слеши, например C:/Tools.
+Пути к загрузчику, FFmpeg и runtime могут быть абсолютными или относительными
+к папке "app.py" (при запуске исходников) либо EXE (в сборке).
+Например: "./yt-dlp.exe", "./ffmpeg/bin", "deno:./deno.exe".
 
 - "youtube_dl_path": исполняемый файл загрузчика.
 - "ffmpeg_path": папка с FFmpeg и FFprobe.

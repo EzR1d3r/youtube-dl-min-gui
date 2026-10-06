@@ -1,12 +1,16 @@
 {
-    "youtube_dl_path": "C:/Tools/yt-dlp/yt-dlp.exe",
-    "ffmpeg_path": "C:/Tools/ffmpeg/bin",
-    "js_runtime_path": "deno:C:/Tools/deno/deno.exe",
+    "youtube_dl_path": "./dl/yt-dlp.exe",
+    "ffmpeg_path": "./ffmpeg/bin",
+    "js_runtime_path": "deno:./deno/deno.exe",
     "download_dir": [
-        "C:/Downloads/youtube-downloads"
+        "C:/Downloads/youtube-downloads",
+        "C:/Downloads/youtube-downloads/mp3"
     ],
     "file_title": "%(title)s.%(ext)s",
-    "options": [""],
+    "options":[
+        "-f 399+140",
+        "--extract-audio --audio-format mp3 --audio-quality 0"
+    ],
     "colors": "mp4+1080p:cyan, m4a:magenta, ERROR:red",
     "font_name": "courier",
     "font_size": 12,
