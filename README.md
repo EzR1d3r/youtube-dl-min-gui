@@ -1,4 +1,6 @@
-# <img src="amanita_logo.png" alt="Amanita Downloader" width="52"> Amanita Downloader
+# Amanita Downloader
+
+![Amanita Downloader logo](amanita_logo.png)
 
 ## Description
 
