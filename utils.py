@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import subprocess
+import shutil
 from threading import Thread
 from io import IOBase
 from typing import Type
@@ -56,6 +57,24 @@ def parse_colors(color_config: str):
     return opt
 
 #utils
+def program_version(program: str, version_option: str = "--version") -> str:
+    executable = shutil.which(program) or program
+    try:
+        result = subprocess.run(
+            [executable, version_option], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", timeout=5,
+        )
+    except FileNotFoundError:
+        return f"{program}: not found"
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return f"{program}: could not read version ({error})"
+    lines = result.stdout.strip().splitlines()
+    if result.returncode != 0:
+        return f"{program}: could not read version (exit code {result.returncode})"
+    version = lines[0] if lines else "unknown version"
+    return version
+
+
 def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "") -> subprocess.Popen:
     l = list(options)
     if js_runtime_path.strip():

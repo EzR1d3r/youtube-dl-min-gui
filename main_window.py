@@ -1,6 +1,7 @@
 from threading import Thread
 import subprocess
 import os
+import shutil
 from typing import Callable
 from textwrap import dedent
 
@@ -163,9 +164,29 @@ class MainWindow:
     def show_app_info(self):
         self.show_ascii_logo()
 
-        proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, "--version")
-        version, _ = proc.communicate()
-        self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
+        suffix = ".exe" if os.name == "nt" else ""
+        ffmpeg = self.settings.ffmpeg_path.strip()
+        if os.path.isdir(ffmpeg):
+            ffmpeg = os.path.join(ffmpeg, "ffmpeg" + suffix)
+        ffmpeg = ffmpeg or "ffmpeg"
+
+        runtime, _, runtime_path = self.settings.js_runtime_path.strip().partition(":")
+        runtime = runtime or "deno"
+        if not runtime_path:
+            runtime_path = shutil.which(runtime) or os.path.join(
+                os.path.dirname(self.settings.youtube_dl_path), runtime + suffix,
+            )
+        elif os.path.isdir(runtime_path):
+            executable_name = "qjs" if runtime == "quickjs" else runtime
+            runtime_path = os.path.join(runtime_path, executable_name + suffix)
+
+        for label, program, options in [
+            ("Downloader", self.settings.youtube_dl_path, ()),
+            ("FFmpeg", ffmpeg, ("-version",)),
+            (runtime.capitalize(), runtime_path, ()),
+        ]:
+            self.append_console_line(f"{label}: {ut.program_version(program, *options)}\n")
+        self.append_console_line("\n")
 
     def show_ascii_logo(self):
         banner_path = os.path.join(os.path.dirname(__file__), "assets", "amanita_banner.txt")
