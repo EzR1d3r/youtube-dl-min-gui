@@ -11,6 +11,7 @@ from typing import Callable, Sequence
 
 from chapters import Chapter
 from audio_tags import AudioTags, CoverImage, cover_path, read_cover, write_audio_tags
+from utils import SUBPROCESS_FLAGS
 
 
 def _executable(location: str, name: str) -> str:
@@ -69,6 +70,7 @@ def split_media(
         [ffprobe, "-v", "error", "-show_streams", "-show_format", "-of", "json", str(source_path)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True, encoding="utf-8", errors="replace",
+        creationflags=SUBPROCESS_FLAGS,
     )
     if probe.returncode != 0:
         raise ValueError(f"FFprobe failed: {probe.stderr.strip()}")
@@ -157,6 +159,7 @@ def split_media(
         with subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace",
+            creationflags=SUBPROCESS_FLAGS,
         ) as process:
             for line in process.stdout:
                 log(line)

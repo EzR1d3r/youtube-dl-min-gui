@@ -16,6 +16,7 @@ PENULTIMATE_LINE = ("end-2l", "end-1l")
 
 enter_point_fname = os.path.realpath(sys.executable if getattr(sys, "frozen", False) else sys.argv[0])
 app_root_dir = os.path.dirname(enter_point_fname)
+SUBPROCESS_FLAGS = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
 
 def resolve_app_path(path: str) -> str:
@@ -77,6 +78,7 @@ def program_version(program: str, version_option: str = "--version") -> str:
         result = subprocess.run(
             [executable, version_option], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace", timeout=5,
+            creationflags=SUBPROCESS_FLAGS,
         )
     except FileNotFoundError:
         return f"{program}: not found"
@@ -94,7 +96,10 @@ def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "") -> sub
     if js_runtime_path.strip():
         l[0:0] = ["--js-runtimes", resolve_js_runtime(js_runtime_path)]
     l.insert(0, resolve_app_path(youtube_dl_path))
-    return subprocess.Popen(l, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return subprocess.Popen(
+        l, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        creationflags=SUBPROCESS_FLAGS,
+    )
 
 def exec_get_info(youtube_dl_path, link, js_runtime_path: str = "") -> subprocess.Popen:
     return exec_youtube_dl(
