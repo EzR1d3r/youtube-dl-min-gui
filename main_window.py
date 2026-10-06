@@ -2,11 +2,12 @@ from threading import Thread
 import subprocess
 import os
 from typing import Callable
+from textwrap import dedent
 
 from tkinter import Tk, Label, Button, Entry, StringVar, BooleanVar, Checkbutton, Text, Frame, Scrollbar
 from tkinter import LEFT, END, Y, END, FIRST
 from tkinter.ttk import Combobox
-from tkinter import messagebox, TclError
+from tkinter import messagebox, TclError, PhotoImage
 
 import utils as ut
 from settings import load_settings, save_settings
@@ -15,7 +16,7 @@ from chapters import Chapter
 from chapter_panel import ChapterPanel
 from download import build_download_plan
 
-app_version = "1.0.1"
+logo_background = "."
 
 title_scheme = "%(title)s.%(ext)s"
 rel_dl_dir = os.path.join("~", "Downloads", "youtube-downloads")
@@ -30,7 +31,9 @@ class MainWindow:
 
         # tk gui root
         self.root = Tk()
-        self.root.title("MinGui Youtube-dl")
+        self.root.title("Amanita Downloader")
+        self.app_icon = PhotoImage(file=os.path.join(os.path.dirname(__file__), "amanita_logo_16x16.png"))
+        self.root.iconphoto(True, self.app_icon)
         self.root.minsize(720, 360)
         if self.settings.window_size:
             self.root.geometry(self.settings.window_size)
@@ -158,11 +161,29 @@ class MainWindow:
         self.append_console_line("\n\n" + ut.load_changelog(self.settings.language))
 
     def show_app_info(self):
-        self.append_console_line(f"MinGui Youtube-dl v{app_version} (c) Voronezh Statics\n")
+        self.show_ascii_logo()
 
         proc = ut.exec_youtube_dl(self.settings.youtube_dl_path, "--version")
         version, _ = proc.communicate()
         self.append_console_line(f"Youtube-dl version: {version.decode()}\n")
+
+    def show_ascii_logo(self):
+        banner_path = os.path.join(os.path.dirname(__file__), "assets", "amanita_banner.txt")
+        with open(banner_path, encoding="utf-8-sig") as file:
+            # Commas in the supplied art represent its background.
+            lines = dedent("\n".join(
+                line.rstrip() for line in file.read().replace(",", logo_background).splitlines() if line.strip()
+            )).splitlines()
+        top, bottom = (255, 0, 0), (150, 0, 50)
+        for index, line in enumerate(lines):
+            fraction = index / max(1, len(lines) - 1)
+            color = "#" + "".join(
+                f"{round(start + (end - start) * fraction):02x}"
+                for start, end in zip(top, bottom)
+            )
+            tag = f"startup_art_{index}"
+            self.txtConsole.tag_configure(tag, foreground=color, font=("courier", 8), wrap="none")
+            self.txtConsole.insert(END, line + "\n", (tag,))
 
     def bind_gui(self):
         self.link_var.trace_add("write", self._clear_link_info)
