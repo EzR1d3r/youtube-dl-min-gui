@@ -88,7 +88,9 @@ The script uses `python` from PATH. If needed, pass an interpreter explicitly:
 .\make_exe.cmd C:\Python3.14.8\python.exe
 ```
 
-The output is `dist/MinGui-youtube-dl.exe`. The script also copies `docs/` and
+The script builds from `amanita_downloader.spec`, which defines the executable
+name and bundled resources. The output is `dist/amanita_downloader.exe`.
+The script also copies `docs/` and
 `.settings.example.json` into `dist/`. Keep `docs/` beside the executable, copy
 the example to `.settings.json` there and configure the binary paths before
 running it. Python is not required to run the built GUI; the external downloader,
@@ -102,6 +104,7 @@ main_window.py            Tkinter interface and download actions
 settings.py               Settings model and JSON persistence
 utils.py                  Downloader processes, console output and instructions
 make_exe.cmd              Windows build and documentation-copy script
+amanita_downloader.spec    PyInstaller build configuration
 .settings.example.json    Portable configuration example
 docs/                     English and Russian instructions and changelogs
 ```

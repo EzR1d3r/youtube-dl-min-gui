@@ -20,7 +20,7 @@ class MediaSplitterIntegrationTests(unittest.TestCase):
             raise unittest.SkipTest(str(error))
 
     def setUp(self):
-        self.workspace = tempfile.TemporaryDirectory(prefix='mingui-test-')
+        self.workspace = tempfile.TemporaryDirectory(prefix='amanita-test-')
         self.addCleanup(self.workspace.cleanup)
         self.folder = Path(self.workspace.name)
         self.processing = self.folder / 'processing'

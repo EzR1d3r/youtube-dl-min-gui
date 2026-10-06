@@ -74,7 +74,7 @@ def build_download_plan(
             }:
                 raise ValueError(f"Extended cannot be combined with {option}.")
         os.makedirs(folder, exist_ok=True)
-        plan.workspace = tempfile.TemporaryDirectory(prefix=".mingui-download-", dir=folder)
+        plan.workspace = tempfile.TemporaryDirectory(prefix=".amanita-download-", dir=folder)
         workspace = Path(plan.workspace.name)
         result_file = str(workspace / "downloaded.jsonl")
         original_cover = None
