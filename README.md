@@ -1,4 +1,6 @@
-# MinGui Youtube-dl
+# Amanita Downloader
+
+![Amanita Downloader logo](amanita_logo.png)
 
 A small Tkinter desktop interface for youtube-dl-compatible downloaders, including
 yt-dlp. Paste a URL, inspect available formats, choose an output folder and start
@@ -19,14 +21,17 @@ a download. Downloader output and errors appear in the application console.
 - A [yt-dlp executable](https://github.com/yt-dlp/yt-dlp#installation) or a
   compatible youtube-dl executable.
 - [FFmpeg](https://ffmpeg.org/download.html) for merging streams and audio conversion.
+- A JavaScript runtime, such as [Deno](https://deno.com/), for yt-dlp.
 
-The GUI uses the Python standard library. Downloader and FFmpeg binaries are
-installed separately and are not included in this repository.
+Install Python dependencies from `requirements.txt`. The downloader, FFmpeg and
+JavaScript runtime are installed separately and are not included in this repository.
+Their versions appear in the application console at startup; keep these tools
+updated yourself for reliable operation.
 
 ## Quick start on Windows
 
 1. Clone the repository and open its directory.
-2. Install the downloader and FFmpeg.
+2. Install the downloader, FFmpeg and Deno.
    Install Python dependencies with `python -m pip install -r requirements.txt`.
 3. Copy the example configuration:
 
@@ -35,8 +40,9 @@ installed separately and are not included in this repository.
    ```
 
 4. Edit `.settings.json`: set `youtube_dl_path` to the downloader executable,
-   `ffmpeg_path` to FFmpeg's `bin` directory and `download_dir` to a
-   list of output folders. Use paths that exist on your computer.
+   `ffmpeg_path` to FFmpeg's `bin` directory, `js_runtime_path` to
+   `deno:C:/Tools/deno/deno.exe` (using your actual Deno path), and `download_dir`
+   to a list of output folders. Use paths that exist on your computer.
 5. Start the application:
 
    ```powershell
@@ -80,8 +86,8 @@ The script uses `python` from PATH. If needed, pass an interpreter explicitly:
 The output is `dist/MinGui-youtube-dl.exe`. The script also copies `docs/` and
 `.settings.example.json` into `dist/`. Keep `docs/` beside the executable, copy
 the example to `.settings.json` there and configure the binary paths before
-running it. Python is not required to run the built GUI; the external downloader
-and FFmpeg are still required.
+running it. Python is not required to run the built GUI; the external downloader,
+FFmpeg and JavaScript runtime are still required.
 
 ## Project layout
 
