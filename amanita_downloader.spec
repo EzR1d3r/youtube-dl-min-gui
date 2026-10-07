@@ -22,7 +22,7 @@ exe = EXE(
     a.datas,
     [],
     name='amanita_downloader',
-    icon='amanita_logo.png',
+    icon='amanita.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
