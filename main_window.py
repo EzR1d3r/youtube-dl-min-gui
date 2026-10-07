@@ -186,6 +186,11 @@ class MainWindow:
             (runtime.capitalize(), runtime_path, ()),
         ]:
             self.append_console_line(f"{label}: {ut.program_version(program, *options)}\n")
+        cookies_path = ut.resolve_app_path(self.settings.cookies)
+        if cookies_path and os.path.isfile(cookies_path):
+            self.append_console_line(f"Cookies file found: {cookies_path}\n")
+        elif cookies_path:
+            self.append_console_line(f"ERROR: Cookies file not found: {cookies_path}\n")
         self.append_console_line("\n")
 
     def show_ascii_logo(self):
@@ -293,6 +298,7 @@ class MainWindow:
             proc = ut.exec_youtube_dl(
                 self.settings.youtube_dl_path, *plan.options, "--", link,
                 js_runtime_path=self.settings.js_runtime_path,
+                cookies=self.settings.cookies,
             )
         except OSError:
             plan.cleanup()
@@ -308,6 +314,7 @@ class MainWindow:
         proc = ut.exec_youtube_dl(
             self.settings.youtube_dl_path, *options,
             js_runtime_path=self.settings.js_runtime_path,
+            cookies=self.settings.cookies,
         )
         self.__redirect_out(proc)
 
@@ -316,6 +323,7 @@ class MainWindow:
         self._clear_link_info()
         proc = ut.exec_get_info(
             self.settings.youtube_dl_path, link, self.settings.js_runtime_path,
+            cookies=self.settings.cookies,
         )
         Thread(
             target=read_link_info,

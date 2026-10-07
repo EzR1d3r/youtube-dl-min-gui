@@ -91,20 +91,22 @@ def program_version(program: str, version_option: str = "--version") -> str:
     return version
 
 
-def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "") -> subprocess.Popen:
+def exec_youtube_dl(youtube_dl_path, *options, js_runtime_path: str = "", cookies: str = "") -> subprocess.Popen:
     l = list(options)
     if js_runtime_path.strip():
         l[0:0] = ["--js-runtimes", resolve_js_runtime(js_runtime_path)]
+    if cookies.strip():
+        l[0:0] = ["--cookies", resolve_app_path(cookies)]
     l.insert(0, resolve_app_path(youtube_dl_path))
     return subprocess.Popen(
         l, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         creationflags=SUBPROCESS_FLAGS,
     )
 
-def exec_get_info(youtube_dl_path, link, js_runtime_path: str = "") -> subprocess.Popen:
+def exec_get_info(youtube_dl_path, link, js_runtime_path: str = "", cookies: str = "") -> subprocess.Popen:
     return exec_youtube_dl(
         youtube_dl_path, "--skip-download", "--no-playlist", "--encoding", "utf-8",
-        "--dump-single-json", "--", link, js_runtime_path=js_runtime_path
+        "--dump-single-json", "--", link, js_runtime_path=js_runtime_path, cookies=cookies
     )
 
 def _readline(obj, newline = (b"\n", b"\r")):

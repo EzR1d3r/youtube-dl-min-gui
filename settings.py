@@ -29,6 +29,7 @@ class Settings:
     youtube_dl_path: str = std_path_youtube_dl_path
     ffmpeg_path: str = std_ffmpeg_dir
     js_runtime_path: str = ""
+    cookies: str = ""
     download_dir: list[str] = field(default_factory=lambda: [std_dl_dir])
     file_title: str = "%(title)s.%(ext)s"
     options: list[str] = field(default_factory=lambda: ["-f 399+140"])

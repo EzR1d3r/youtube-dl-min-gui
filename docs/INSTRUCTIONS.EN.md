@@ -26,6 +26,9 @@ Examples: "./yt-dlp.exe", "./ffmpeg/bin", "deno:./deno.exe".
 - "js_runtime_path": runtime and path, for example "deno:C:/Tools/deno/deno.exe".
   An empty string keeps yt-dlp's defaults.
 - "download_dir" and "options": lists of saved folders and option presets.
+- "cookies": a Netscape cookies file, for example "./cookies.txt".
+  Use an absolute path or one relative to the application folder; leave empty to disable.
+  One file can contain cookies for multiple sites. yt-dlp may update it.
 - "colors": highlighting rules, for example "mp4+1080p:cyan, ERROR:red".
 - "font_name", "font_size", "console_bg", "console_fg": console appearance.
 - "language": "EN" or "RU". "window_size" is saved automatically on closing.

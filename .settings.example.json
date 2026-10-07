@@ -2,6 +2,7 @@
     "youtube_dl_path": "./dl/yt-dlp.exe",
     "ffmpeg_path": "./ffmpeg/bin",
     "js_runtime_path": "deno:./deno/deno.exe",
+    "cookies": "",
     "download_dir": [
         "C:/Downloads/youtube-downloads",
         "C:/Downloads/youtube-downloads/mp3"

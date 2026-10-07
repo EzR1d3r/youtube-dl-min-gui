@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.1.0
+## 1.2.0 (Unreleased)
+
+- Support a cookies file through the "cookies" setting for downloads and information requests.
+
+## 1.1.1
 
 - Fix separate console windows appearing when launching the downloader, FFmpeg and FFprobe on Windows.
 

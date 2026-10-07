@@ -26,6 +26,9 @@ JavaScript runtime, например Deno. Версии этих програм�
 - "js_runtime_path": runtime и путь, например "deno:C:/Tools/deno/deno.exe".
   Пустая строка оставляет настройки yt-dlp по умолчанию.
 - "download_dir" и "options": списки сохранённых папок и наборов опций.
+- "cookies": файл cookies в формате Netscape, например "./cookies.txt".
+  Путь абсолютный или относительно папки программы; пустая строка отключает опцию.
+  Один файл может содержать cookies нескольких сайтов. yt-dlp может обновлять его.
 - "colors": правила подсветки, например "mp4+1080p:cyan, ERROR:red".
 - "font_name", "font_size", "console_bg", "console_fg": оформление консоли.
 - "language": "EN" или "RU". "window_size" сохраняется при закрытии.
