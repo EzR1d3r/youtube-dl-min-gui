@@ -1,6 +1,7 @@
 """Chapter time editor with editable audio tags."""
 
 import tkinter as tk
+from dataclasses import replace
 from tkinter import ttk
 from tkinter import filedialog, messagebox
 
@@ -8,10 +9,11 @@ from audio_tags import AudioTags, ORIGINAL_COVER, cover_path
 from chapter_editor import ChapterEditor, ChapterRow
 from chapters import Chapter
 from tooltips import ToolTip
+from time_spinbox import format_time, parse_time
 
 
 class AudioChapterEditor(ChapterEditor):
-    headings = ("Track", "Artist", "Title", "Album", "Year", "Album Artist", "Cover", "Start", "End", "Lock")
+    headings = ("Track", "Artist", "Title", "Album", "Year", "Album Artist", "Cover", "Start", "End", "Lock", "Segments")
     field_names = ("track", "artist", "title", "album", "year", "album_artist", "cover")
     time_columns = (8, 9)
     lock_column = 10
@@ -47,6 +49,10 @@ class AudioChapterEditor(ChapterEditor):
                 field = self.field_names[column - 1]
                 ttk.Button(header, text="…", width=2,
                            command=lambda f=field, h=heading: self._edit_selected(f, h)).pack(side="left", padx=(4, 0))
+            elif column == 11:
+                button = ttk.Button(header, text="−", width=2, command=self._remove_selected)
+                button.pack(side="left", padx=(4, 0))
+                ToolTip(button, "Remove selected segments")
 
     def _select_all(self) -> None:
         for variable in self.selected:
@@ -81,8 +87,66 @@ class AudioChapterEditor(ChapterEditor):
             entry = ttk.Entry(self.body, textvariable=fields[name], width=width)
             entry.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
             if name == "track":
-                entry.bind("<FocusOut>", lambda event, i=number - 1: self._format_track(i))
-                entry.bind("<Return>", lambda event, i=number - 1: self._format_track(i))
+                entry.bind("<FocusOut>", lambda event, f=fields: self._format_track(self.fields.index(f)))
+                entry.bind("<Return>", lambda event, f=fields: self._format_track(self.fields.index(f)))
+        actions = ttk.Frame(self.body)
+        actions.grid(row=number, column=11, padx=8, pady=4)
+        ttk.Button(actions, text="−", width=2, command=lambda r=row: self._remove_segment(r)).pack(side="left")
+        ttk.Button(actions, text="+", width=2, command=lambda r=row: self._insert_segment(r)).pack(side="left", padx=(3, 0))
+
+    def _remove_selected(self) -> None:
+        rows = [row for row, selected in zip(self.rows, self.selected) if selected.get()]
+        for row in reversed(rows):
+            self._remove_segment(row)
+
+    def _remove_segment(self, row: ChapterRow) -> None:
+        index = self.rows.index(row)
+        for widget in self.body.winfo_children():
+            number = int(widget.grid_info()["row"])
+            if number == index + 1:
+                widget.destroy()
+            elif number > index + 1:
+                widget.grid_configure(row=number - 1)
+        self.rows.pop(index)
+        self.fields.pop(index)
+        self.selected.pop(index)
+        self._segments_changed()
+
+    def _insert_segment(self, row: ChapterRow | None) -> None:
+        index = self.rows.index(row) + 1 if row is not None else 0
+        try:
+            start_ms = parse_time(row.end.get()) if row is not None else 0
+            end_ms = parse_time(self.rows[index].start.get()) if index < len(self.rows) else start_ms
+        except ValueError:
+            messagebox.showerror("Add segment", "Enter valid times before adding a segment.", parent=self)
+            return
+        track = max((int(fields["track"].get()) for fields in self.fields
+                     if fields["track"].get().isascii() and fields["track"].get().isdigit()), default=0) + 1
+        chapter = Chapter("New segment", start_ms / 1000, end_ms / 1000)
+        new_row = ChapterRow(
+            chapter, tk.StringVar(master=self, value=format_time(start_ms)),
+            tk.StringVar(master=self, value=format_time(end_ms)),
+            tk.BooleanVar(master=self, value=False),
+        )
+        for widget in self.body.winfo_children():
+            number = int(widget.grid_info()["row"])
+            if number >= index + 1:
+                widget.grid_configure(row=number + 1)
+        self.rows.insert(index, new_row)
+        self._add_row_widgets(index + 1, new_row)
+        fields = self.fields.pop()
+        fields["track"].set(f"{track:02d}")
+        self.fields.insert(index, fields)
+        self.selected.insert(index, self.selected.pop())
+        self._segments_changed()
+
+    def _segments_changed(self) -> None:
+        self._update_locks()
+        self._selection_changed()
+        for widget in self.body.winfo_children():
+            widget.bind("<MouseWheel>", self._scroll)
+        self.on_change([replace(row.chapter, title=self.fields[index]["title"].get().strip())
+                        for index, row in enumerate(self.rows)])
 
     def _edit_selected(self, field: str, heading: str) -> None:
         indexes = [index for index, selected in enumerate(self.selected) if selected.get()]

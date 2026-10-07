@@ -2,6 +2,7 @@
 
 ## 1.2.0 (Unreleased)
 
+- Add and remove segments in "Extended Audio".
 - Support a cookies file through the "cookies" setting for downloads and information requests.
 
 ## 1.1.1

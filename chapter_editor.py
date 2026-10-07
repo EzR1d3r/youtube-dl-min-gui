@@ -67,25 +67,34 @@ class ChapterEditor(ttk.Frame):
                 tk.BooleanVar(master=self, value=True),
             )
             self.rows.append(row)
-            self._add_identity_widgets(number, row)
-            for column, field, variable in [(self.time_columns[0], "start", row.start),
-                                             (self.time_columns[1], "end", row.end)]:
-                spinbox = TimeSpinbox(
-                    self.body, textvariable=variable, maximum_ms=maximum_ms
-                )
-                spinbox.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
-                index = number - 1
-                variable.trace_add("write", lambda *args, i=index, f=field: self._time_changed(i, f))
-                spinbox.bind("<FocusOut>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
-                spinbox.bind("<Return>", lambda event, i=index, f=field: self._finish_edit(i, f), add="+")
-            lock = ttk.Checkbutton(self.body, variable=row.locked, command=lambda i=number - 1: self._lock_changed(i))
-            lock.grid(row=number, column=self.lock_column, padx=8, pady=4)
-            if number == len(chapters):
-                lock.state(["disabled"])
+            self._add_row_widgets(number, row)
+        self._update_locks()
         for widget in self.body.winfo_children():
             widget.bind("<MouseWheel>", self._scroll)
         self.canvas.yview_moveto(0)
         self.on_change([row.chapter for row in self.rows])
+
+    def _add_row_widgets(self, number: int, row: ChapterRow) -> None:
+        self._add_identity_widgets(number, row)
+        for column, field, variable in [(self.time_columns[0], "start", row.start),
+                                         (self.time_columns[1], "end", row.end)]:
+            spinbox = TimeSpinbox(
+                self.body, textvariable=variable,
+                maximum_ms=seconds_to_milliseconds(self._maximum),
+            )
+            spinbox.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
+            variable.trace_add("write", lambda *args, r=row, f=field: self._time_changed(self.rows.index(r), f))
+            spinbox.bind("<FocusOut>", lambda event, r=row, f=field: self._finish_edit(self.rows.index(r), f), add="+")
+            spinbox.bind("<Return>", lambda event, r=row, f=field: self._finish_edit(self.rows.index(r), f), add="+")
+        lock = ttk.Checkbutton(self.body, variable=row.locked,
+                               command=lambda r=row: self._lock_changed(self.rows.index(r)))
+        lock.grid(row=number, column=self.lock_column, padx=8, pady=4)
+
+    def _update_locks(self) -> None:
+        for widget in self.body.winfo_children():
+            info = widget.grid_info()
+            if info and int(info["column"]) == self.lock_column and int(info["row"]) > 0:
+                widget.state(["disabled"] if int(info["row"]) == len(self.rows) else ["!disabled"])
 
     def get_chapters(self) -> list[Chapter]:
         chapters = []
@@ -118,7 +127,11 @@ class ChapterEditor(ttk.Frame):
             return
         # Allow incomplete input while typing, but never publish invalid times.
         try:
-            chapters = self.get_chapters()
+            chapters = [row.chapter for row in self.rows]
+            row = self.rows[index]
+            start, end = parse_time(row.start.get()) / 1000, parse_time(row.end.get()) / 1000
+            self._validate_times(start, end, index + 1)
+            chapters[index] = Chapter(self._chapter_title(index, row), start, end)
             neighbor = None
             if field == "end" and index + 1 < len(self.rows) and self.rows[index].locked.get():
                 neighbor = index + 1

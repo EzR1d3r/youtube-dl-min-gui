@@ -48,6 +48,11 @@ Extended modes keep the original file and show FFmpeg processing logs.
 
 ## Audio tags and covers
 
+In "Extended Audio", "−" removes a segment and "+" inserts one after it,
+from its end to the next segment's start. Adding after the last segment creates
+a zero-length range; adjust it before downloading. Other tracks are not renumbered.
+The "−" button in the "Segments" heading removes all selected rows.
+
 Edit Title, Artist, Track, Album, Year and Album Artist.
 Track is displayed and tagged as "01"; Year is four digits or empty.
 Filenames are "01 - Artist - Title", or "01 - Title" when Artist is empty.
