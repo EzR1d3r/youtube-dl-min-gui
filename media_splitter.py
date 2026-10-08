@@ -1,6 +1,7 @@
 """Accurate local chapter splitting with FFmpeg re-encoding."""
 
 import json
+from dataclasses import replace
 import math
 import os
 from pathlib import Path
@@ -89,7 +90,16 @@ def split_media(
     if duration is not None:
         duration = float(duration)
         if math.isfinite(duration):
+            chapters = list(chapters)
             for number, chapter in enumerate(chapters, 1):
+                if chapter.start_time >= duration:
+                    raise ValueError(f"Chapter {number} starts at or beyond the downloaded file's end "
+                                     f"({duration:.2f} s).")
+                if number == len(chapters) and chapter.end_time > duration:
+                    log(f"[Split media] Trimming chapter {number} end from {chapter.end_time:.3f} "
+                        f"to file duration {duration:.3f} s\n")
+                    chapters[number - 1] = replace(chapter, end_time=duration)
+                    continue
                 # Allow small differences between reported and encoded durations.
                 if chapter.end_time > duration + 0.25:
                     raise ValueError(f"Chapter {number} ends beyond the downloaded file "
