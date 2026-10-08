@@ -4,7 +4,7 @@ import math
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Callable
 
 from chapters import Chapter
@@ -19,6 +19,7 @@ class ChapterRow:
     end: tk.StringVar
     locked: tk.BooleanVar
     title: tk.StringVar | None = None
+    lock_control: ttk.Checkbutton | None = field(default=None, compare=False, repr=False)
 
 
 class ChapterEditor(ttk.Frame):
@@ -97,16 +98,20 @@ class ChapterEditor(ttk.Frame):
         lock = ttk.Checkbutton(self.body, variable=row.locked,
                                command=lambda r=row: self._lock_changed(self.rows.index(r)))
         lock.grid(row=number, column=self.lock_column, padx=8, pady=4)
+        row.lock_control = lock
+        lock.configure(state="disabled" if row is self.rows[-1] else "normal")
         actions = ttk.Frame(self.body)
         actions.grid(row=number, column=self.segments_column, padx=8, pady=4)
         ttk.Button(actions, text="−", width=2, command=lambda r=row: self._remove_segment(r)).pack(side="left")
         ttk.Button(actions, text="+", width=2, command=lambda r=row: self._insert_segment(r)).pack(side="left", padx=(3, 0))
 
     def _update_locks(self) -> None:
-        for widget in self.body.winfo_children():
-            info = widget.grid_info()
-            if info and int(info["column"]) == self.lock_column and int(info["row"]) > 0:
-                widget.state(["disabled"] if int(info["row"]) == len(self.rows) else ["!disabled"])
+        for index, row in enumerate(self.rows):
+            last = index == len(self.rows) - 1
+            if last:
+                row.locked.set(True)
+            if row.lock_control is not None:
+                row.lock_control.configure(state="disabled" if last else "normal")
 
     def get_chapters(self) -> list[Chapter]:
         chapters = []
