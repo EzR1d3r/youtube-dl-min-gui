@@ -5,7 +5,7 @@ from dataclasses import replace
 from tkinter import ttk
 from tkinter import filedialog, messagebox
 
-from audio_tags import AudioTags, ORIGINAL_COVER, cover_path
+from audio_tags import AudioTags, ORIGINAL_COVER, EXTRA_TAGS, cover_path, validate_extra_tags
 from chapter_editor import ChapterEditor, ChapterRow
 from chapters import Chapter
 from tooltips import ToolTip
@@ -13,15 +13,19 @@ from time_spinbox import format_time, parse_time
 
 
 class AudioChapterEditor(ChapterEditor):
-    headings = ("Track", "Artist", "Title", "Album", "Year", "Album Artist", "Cover", "Start", "End", "Lock", "Segments")
+    headings = ("Track", "Artist", "Title", "Album", "Year", "Album Artist", "Cover", "Tag", "Start", "End", "Lock", "Segments")
     field_names = ("track", "artist", "title", "album", "year", "album_artist", "cover")
-    time_columns = (8, 9)
-    lock_column = 10
+    time_columns = (9, 10)
+    lock_column = 11
+    tag_column = 8
+    segments_column = 12
 
     def __init__(self, master, on_change):
         self.fields: list[dict[str, tk.StringVar]] = []
         self.selected: list[tk.BooleanVar] = []
+        self.extra_tags: list[str] = []
         super().__init__(master, on_change)
+        self.tag_menu = tk.Menu(self, tearoff=False)
         self.select_all = tk.BooleanVar(master=self, value=False)
         self.body.columnconfigure(1, weight=0)
         self.body.columnconfigure(2, weight=1)
@@ -41,18 +45,60 @@ class AudioChapterEditor(ChapterEditor):
             self.body, text="All", variable=self.select_all, command=self._select_all,
         )
         self.select_all_button.grid(row=0, column=0, padx=8, pady=4)
-        for column, heading in enumerate(self.headings, 1):
+        fields = (*self.field_names, *self.extra_tags)
+        headings = (*self.headings[:7], *(f"{EXTRA_TAGS[key][0]} ({key})" for key in self.extra_tags), *self.headings[7:])
+        for column, heading in enumerate(headings, 1):
             header = ttk.Frame(self.body)
             header.grid(row=0, column=column, sticky="w", padx=8, pady=4)
             ttk.Label(header, text=heading).pack(side="left")
-            if column <= len(self.field_names):
-                field = self.field_names[column - 1]
+            if column <= len(fields):
+                field = fields[column - 1]
                 ttk.Button(header, text="…", width=2,
                            command=lambda f=field, h=heading: self._edit_selected(f, h)).pack(side="left", padx=(4, 0))
-            elif column == 11:
+            elif column == self.tag_column:
+                button = ttk.Button(header, text="+", width=2)
+                button.configure(command=lambda b=button: self._show_tag_menu(b))
+                button.pack(side="left", padx=(4, 0))
+                ToolTip(button, "Add an audio tag column")
+            elif column == self.segments_column:
                 button = ttk.Button(header, text="−", width=2, command=self._remove_selected)
                 button.pack(side="left", padx=(4, 0))
                 ToolTip(button, "Remove selected segments")
+
+    def _show_tag_menu(self, button) -> None:
+        menu = self.tag_menu
+        menu.delete(0, "end")
+        for key, (label, _) in EXTRA_TAGS.items():
+            menu.add_command(label=f"{label} ({key})", command=lambda k=key: self._add_tag(k),
+                             state="disabled" if key in self.extra_tags else "normal")
+        try:
+            menu.tk_popup(button.winfo_rootx(), button.winfo_rooty() + button.winfo_height())
+        finally:
+            menu.grab_release()
+
+    def _add_tag(self, key: str) -> None:
+        if key in self.extra_tags:
+            return
+        column = self.tag_column
+        for widget in self.body.winfo_children():
+            info = widget.grid_info()
+            if int(info["row"]) == 0:
+                widget.destroy()
+            elif int(info["column"]) >= column:
+                widget.grid_configure(column=int(info["column"]) + 1)
+        self.extra_tags.append(key)
+        self.tag_column += 1
+        self.time_columns = tuple(value + 1 for value in self.time_columns)
+        self.lock_column += 1
+        self.segments_column += 1
+        for number, fields in enumerate(self.fields, 1):
+            fields[key] = tk.StringVar(master=self)
+            entry = ttk.Entry(self.body, textvariable=fields[key], width=24)
+            entry.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
+            entry.bind("<MouseWheel>", self._scroll)
+        self.body.columnconfigure(column, weight=1)
+        self._add_headers()
+        self._selection_changed()
 
     def _select_all(self) -> None:
         for variable in self.selected:
@@ -79,10 +125,12 @@ class AudioChapterEditor(ChapterEditor):
             "album_artist": tk.StringVar(master=self),
             "cover": tk.StringVar(master=self, value=ORIGINAL_COVER),
         }
+        fields.update({key: tk.StringVar(master=self) for key in self.extra_tags})
         self.fields.append(fields)
         for column, (name, width) in enumerate([
             ("track", 5), ("artist", 20), ("title", 30), ("album", 20),
             ("year", 6), ("album_artist", 20), ("cover", 28),
+            *((key, 24) for key in self.extra_tags),
         ], 1):
             entry = ttk.Entry(self.body, textvariable=fields[name], width=width)
             entry.grid(row=number, column=column, sticky="ew", padx=8, pady=4)
@@ -90,7 +138,7 @@ class AudioChapterEditor(ChapterEditor):
                 entry.bind("<FocusOut>", lambda event, f=fields: self._format_track(self.fields.index(f)))
                 entry.bind("<Return>", lambda event, f=fields: self._format_track(self.fields.index(f)))
         actions = ttk.Frame(self.body)
-        actions.grid(row=number, column=11, padx=8, pady=4)
+        actions.grid(row=number, column=self.segments_column, padx=8, pady=4)
         ttk.Button(actions, text="−", width=2, command=lambda r=row: self._remove_segment(r)).pack(side="left")
         ttk.Button(actions, text="+", width=2, command=lambda r=row: self._insert_segment(r)).pack(side="left", padx=(3, 0))
 
@@ -223,6 +271,8 @@ class AudioChapterEditor(ChapterEditor):
             raise ValueError("Year must be four digits or empty.")
         elif field == "cover" and value and value != ORIGINAL_COVER:
             value = str(cover_path(value))
+        elif field in EXTRA_TAGS:
+            validate_extra_tags({field: value})
         for index in indexes:
             self.fields[index][field].set(value)
 
@@ -254,7 +304,12 @@ class AudioChapterEditor(ChapterEditor):
                 except ValueError as error:
                     raise ValueError(f"Chapter {number}: {error}") from error
             self._format_track(number - 1)
+            extra = {key: fields[key].get().strip() for key in self.extra_tags}
+            try:
+                validate_extra_tags(extra)
+            except ValueError as error:
+                raise ValueError(f"Chapter {number}: {error}") from error
             result.append(AudioTags(title, fields["artist"].get().strip(), int(track),
                                     fields["album"].get().strip(), year,
-                                    fields["album_artist"].get().strip(), cover))
+                                    fields["album_artist"].get().strip(), cover, extra=extra))
         return result

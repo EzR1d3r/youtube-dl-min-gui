@@ -48,6 +48,11 @@ Extended modes keep the original file and show FFmpeg processing logs.
 
 ## Audio tags and covers
 
+The "+" button in the "Tag" heading adds an optional tag column:
+Artist URL (WOAR), Audio URL (WOAF), Genre, Composer, Comment, Disc, BPM,
+Copyright, Publisher or Language. Use "…" to apply a value to selected rows.
+Additional tags are written to MP3; an empty field removes the corresponding tag.
+
 In "Extended Audio", "−" removes a segment and "+" inserts one after it,
 from its end to the next segment's start. Adding after the last segment creates
 a zero-length range; adjust it before downloading. Other tracks are not renumbered.

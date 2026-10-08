@@ -2,6 +2,7 @@
 
 ## 1.2.0 (Unreleased)
 
+- Add optional audio tag columns through "Tag +", including WOAR and WOAF URLs, with bulk editing and MP3 tag writing.
 - Add and remove segments in "Extended Audio".
 - Support a cookies file through the "cookies" setting for downloads and information requests.
 

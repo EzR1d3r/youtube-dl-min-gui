@@ -1,12 +1,33 @@
 """Editable audio metadata and Mutagen tag writing."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from mutagen.id3 import ID3, ID3NoHeaderError, TIT2, TPE1, TPE2, TRCK, TALB, TDRC, APIC, PictureType
+from mutagen.id3 import WOAR, WOAF, TCON, TCOM, COMM, TPOS, TBPM, TCOP, TPUB, TLAN
 
 
 ORIGINAL_COVER = "<original>"
+EXTRA_TAGS = {
+    "WOAR": ("Artist URL", WOAR),
+    "WOAF": ("Audio URL", WOAF),
+    "TCON": ("Genre", TCON),
+    "TCOM": ("Composer", TCOM),
+    "COMM": ("Comment", COMM),
+    "TPOS": ("Disc", TPOS),
+    "TBPM": ("BPM", TBPM),
+    "TCOP": ("Copyright", TCOP),
+    "TPUB": ("Publisher", TPUB),
+    "TLAN": ("Language", TLAN),
+}
+
+
+def validate_extra_tags(values: dict[str, str]) -> None:
+    for key, value in values.items():
+        if key not in EXTRA_TAGS:
+            raise ValueError(f"Unsupported audio tag: {key}")
+        if key in ("WOAR", "WOAF") and not value.isascii():
+            raise ValueError(f"{key}: use an ASCII URL with percent-encoded non-ASCII characters.")
 COVER_TYPES = {
     ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
     ".gif": "image/gif", ".bmp": "image/bmp",
@@ -59,6 +80,7 @@ class AudioTags:
     year: str = ""
     album_artist: str = ""
     cover: str = ORIGINAL_COVER
+    extra: dict[str, str] = field(default_factory=dict)
 
     @property
     def track_text(self) -> str:
@@ -68,6 +90,7 @@ class AudioTags:
 def write_audio_tags(path: Path, tags: AudioTags, cover: CoverImage | None = None) -> None:
     if path.suffix.lower() != ".mp3":
         raise ValueError(f"Unsupported audio tag format: {path.suffix}")
+    validate_extra_tags(tags.extra)
     try:
         metadata = ID3(path)
     except ID3NoHeaderError:
@@ -79,6 +102,17 @@ def write_audio_tags(path: Path, tags: AudioTags, cover: CoverImage | None = Non
     ]:
         metadata.delall(key)
         if value:
+            metadata.add(frame(encoding=3, text=[value]))
+    for key, value in tags.extra.items():
+        metadata.delall(key)
+        if not value:
+            continue
+        frame = EXTRA_TAGS[key][1]
+        if key in ("WOAR", "WOAF"):
+            metadata.add(frame(url=value))
+        elif key == "COMM":
+            metadata.add(frame(encoding=3, lang="eng", desc="", text=[value]))
+        else:
             metadata.add(frame(encoding=3, text=[value]))
     metadata.delall("APIC")
     if cover is not None:
