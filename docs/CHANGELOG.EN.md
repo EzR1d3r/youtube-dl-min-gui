@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (Unreleased)
+## 1.2.0
 
 - Add "S" to split Title into Artist and Title, and "T" to convert selected Title and Artist values to Title Case.
 - Clamp the last segment's end to the downloaded file duration when splitting in Extended modes.
