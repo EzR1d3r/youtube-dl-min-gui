@@ -62,6 +62,9 @@ Additional tags are written to MP3; an empty field removes the corresponding tag
 Adding or removing segments does not change existing Track numbers.
 
 Edit Title, Artist, Track, Album, Year and Album Artist.
+"S" beside Title splits at the first occurrence of a chosen separator (default "-"):
+the first part replaces Artist and the second stays in Title. Without a match, the row stays unchanged.
+"T" beside Title and Artist converts selected rows to Title Case: "my title" → "My Title".
 Track is displayed and tagged as "01"; Year is four digits or empty.
 Filenames are "01 - Artist - Title", or "01 - Title" when Artist is empty.
 

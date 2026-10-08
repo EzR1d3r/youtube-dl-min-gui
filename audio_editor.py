@@ -46,6 +46,16 @@ class AudioChapterEditor(ChapterEditor):
                 field = fields[column - 1]
                 ttk.Button(header, text="…", width=2,
                            command=lambda f=field, h=heading: self._edit_selected(f, h)).pack(side="left", padx=(4, 0))
+                if field == "title":
+                    button = ttk.Button(header, text="S", width=2,
+                                        command=lambda: self._edit_selected("split_title", "Title separator"))
+                    button.pack(side="left", padx=(3, 0))
+                    ToolTip(button, "Split selected titles into Artist and Title at the first separator")
+                if field in ("title", "artist"):
+                    button = ttk.Button(header, text="T", width=2,
+                                        command=lambda f=field: self._title_case_selected(f))
+                    button.pack(side="left", padx=(3, 0))
+                    ToolTip(button, "Convert selected values to Title Case")
             elif column == self.tag_column:
                 button = ttk.Button(header, text="+", width=2)
                 button.configure(command=lambda b=button: self._show_tag_menu(b))
@@ -123,10 +133,20 @@ class AudioChapterEditor(ChapterEditor):
         fields["track"].set(f"{track:02d}")
         self.fields.insert(index, fields)
 
-    def _edit_selected(self, field: str, heading: str) -> None:
+    def _selected_indexes(self) -> list[int]:
         indexes = [index for index, selected in enumerate(self.selected) if selected.get()]
         if not indexes:
             messagebox.showinfo("Edit segments", "Select at least one segment first.", parent=self)
+        return indexes
+
+    def _title_case_selected(self, field: str) -> None:
+        for index in self._selected_indexes():
+            variable = self.fields[index][field]
+            variable.set(variable.get().title())
+
+    def _edit_selected(self, field: str, heading: str) -> None:
+        indexes = self._selected_indexes()
+        if not indexes:
             return
         first = indexes[0]
         dialog = tk.Toplevel(self)
@@ -137,7 +157,7 @@ class AudioChapterEditor(ChapterEditor):
         ttk.Label(dialog, text=f"{heading} for {len(indexes)} selected segments:").grid(
             row=0, column=0, columnspan=3, sticky="w", padx=12, pady=10,
         )
-        value = tk.StringVar(master=dialog, value=self.fields[first][field].get())
+        value = tk.StringVar(master=dialog, value="-" if field == "split_title" else self.fields[first][field].get())
         input_row = ttk.Frame(dialog)
         input_row.grid(row=1, column=0, columnspan=3, sticky="ew", padx=12, pady=4)
         control = ttk.Entry(input_row, textvariable=value, width=55)
@@ -187,6 +207,16 @@ class AudioChapterEditor(ChapterEditor):
         control.focus_set()
 
     def _apply_selected(self, field: str, indexes: list[int], value: str) -> None:
+        if field == "split_title":
+            if not value:
+                raise ValueError("Enter a separator.")
+            for index in indexes:
+                fields = self.fields[index]
+                artist, separator, title = fields["title"].get().partition(value)
+                if separator:
+                    fields["artist"].set(artist.strip())
+                    fields["title"].set(title.strip())
+            return
         value = value.strip()
         if field == "track":
             if not (value.isascii() and value.isdigit() and 1 <= int(value) <= 65535):

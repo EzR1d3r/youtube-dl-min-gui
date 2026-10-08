@@ -2,6 +2,7 @@
 
 ## 1.2.0 (Unreleased)
 
+- Add "S" to split Title into Artist and Title, and "T" to convert selected Title and Artist values to Title Case.
 - Clamp the last segment's end to the downloaded file duration when splitting in Extended modes.
 - Add optional audio tag columns through "Tag +", including WOAR and WOAF URLs, with bulk editing and MP3 tag writing.
 - Add and remove segments in "Extended" and "Extended Audio", and edit chapter names in "Extended".
