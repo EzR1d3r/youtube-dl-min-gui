@@ -3,11 +3,13 @@
 import math
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from dataclasses import dataclass, replace
 from typing import Callable
 
 from chapters import Chapter
 from time_spinbox import TimeSpinbox, format_time, parse_time, seconds_to_milliseconds
+from tooltips import ToolTip
 
 
 @dataclass
@@ -16,17 +18,21 @@ class ChapterRow:
     start: tk.StringVar
     end: tk.StringVar
     locked: tk.BooleanVar
+    title: tk.StringVar | None = None
 
 
 class ChapterEditor(ttk.Frame):
-    headings = ("#", "Chapter", "Start", "End", "Lock")
+    headings = ("All", "Chapter", "Start", "End", "Lock", "Segments")
     time_columns = (2, 3)
     lock_column = 4
+    segments_column = 5
 
     def __init__(self, master, on_change: Callable[[list[Chapter]], None]):
         super().__init__(master)
         self.on_change = on_change
         self.rows: list[ChapterRow] = []
+        self.selected: list[tk.BooleanVar] = []
+        self.select_all = tk.BooleanVar(master=self, value=False)
         self._updating = False
         self._maximum = 0.0
         self.columnconfigure(0, weight=1)
@@ -52,6 +58,8 @@ class ChapterEditor(ttk.Frame):
         for widget in self.body.winfo_children():
             widget.destroy()
         self.rows.clear()
+        self.selected.clear()
+        self.select_all.set(False)
         self._add_headers()
         maximum = max((chapter.end_time for chapter in chapters), default=1)
         maximum_ms = seconds_to_milliseconds(maximum)
@@ -89,6 +97,10 @@ class ChapterEditor(ttk.Frame):
         lock = ttk.Checkbutton(self.body, variable=row.locked,
                                command=lambda r=row: self._lock_changed(self.rows.index(r)))
         lock.grid(row=number, column=self.lock_column, padx=8, pady=4)
+        actions = ttk.Frame(self.body)
+        actions.grid(row=number, column=self.segments_column, padx=8, pady=4)
+        ttk.Button(actions, text="−", width=2, command=lambda r=row: self._remove_segment(r)).pack(side="left")
+        ttk.Button(actions, text="+", width=2, command=lambda r=row: self._insert_segment(r)).pack(side="left", padx=(3, 0))
 
     def _update_locks(self) -> None:
         for widget in self.body.winfo_children():
@@ -104,19 +116,120 @@ class ChapterEditor(ttk.Frame):
             except ValueError as error:
                 raise ValueError(f"Chapter {number}: enter HH:MM:SS:CC") from error
             self._validate_times(start, end, number)
-            chapters.append(Chapter(self._chapter_title(number - 1, row), start, end))
+            title = self._chapter_title(number - 1, row)
+            if not title:
+                raise ValueError(f"Chapter {number}: enter a Title.")
+            chapters.append(Chapter(title, start, end))
         return chapters
 
     def _add_identity_widgets(self, number: int, row: ChapterRow) -> None:
-        ttk.Label(self.body, text=str(number)).grid(row=number, column=0, sticky="w", padx=8, pady=4)
-        ttk.Label(self.body, text=row.chapter.title).grid(row=number, column=1, sticky="w", padx=8, pady=4)
+        self._add_selection_widget(number)
+        row.title = tk.StringVar(master=self, value=row.chapter.title)
+        ttk.Entry(self.body, textvariable=row.title, width=40).grid(row=number, column=1, sticky="ew", padx=8, pady=4)
+        row.title.trace_add("write", lambda *args, r=row: self._title_changed(r))
 
     def _add_headers(self) -> None:
+        self._add_selection_header()
         for column, heading in enumerate(self.headings):
-            ttk.Label(self.body, text=heading).grid(row=0, column=column, sticky="w", padx=8, pady=4)
+            if column == 0:
+                continue
+            header = ttk.Frame(self.body)
+            header.grid(row=0, column=column, sticky="w", padx=8, pady=4)
+            ttk.Label(header, text=heading).pack(side="left")
+            if column == self.segments_column:
+                self._add_segment_header_button(header)
 
     def _chapter_title(self, index: int, row: ChapterRow) -> str:
-        return row.chapter.title
+        return row.title.get().strip() if row.title is not None else row.chapter.title
+
+    def _title_changed(self, row: ChapterRow) -> None:
+        row.chapter = replace(row.chapter, title=row.title.get().strip())
+        self.on_change([item.chapter for item in self.rows])
+
+    def _add_selection_header(self) -> None:
+        self.select_all_button = ttk.Checkbutton(
+            self.body, text="All", variable=self.select_all, command=self._select_all,
+        )
+        self.select_all_button.grid(row=0, column=0, padx=8, pady=4)
+
+    def _add_selection_widget(self, number: int) -> None:
+        selected = tk.BooleanVar(master=self, value=False)
+        self.selected.append(selected)
+        ttk.Checkbutton(self.body, variable=selected, command=self._selection_changed).grid(
+            row=number, column=0, padx=8, pady=4,
+        )
+
+    def _add_segment_header_button(self, header) -> None:
+        button = ttk.Button(header, text="−", width=2, command=self._remove_selected)
+        button.pack(side="left", padx=(4, 0))
+        ToolTip(button, "Remove selected segments")
+
+    def _select_all(self) -> None:
+        for variable in self.selected:
+            variable.set(self.select_all.get())
+        self._selection_changed()
+
+    def _selection_changed(self) -> None:
+        count = sum(variable.get() for variable in self.selected)
+        self.select_all.set(bool(self.selected) and count == len(self.selected))
+        self.select_all_button.state(["alternate"] if 0 < count < len(self.selected) else ["!alternate"])
+
+    def _remove_selected(self) -> None:
+        rows = [row for row, selected in zip(self.rows, self.selected) if selected.get()]
+        for row in reversed(rows):
+            self._remove_segment(row)
+
+    def _remove_segment(self, row: ChapterRow) -> None:
+        index = self.rows.index(row)
+        for widget in self.body.winfo_children():
+            number = int(widget.grid_info()["row"])
+            if number == index + 1:
+                widget.destroy()
+            elif number > index + 1:
+                widget.grid_configure(row=number - 1)
+        self.rows.pop(index)
+        self.selected.pop(index)
+        self._row_removed(index)
+        self._segments_changed()
+
+    def _insert_segment(self, row: ChapterRow | None) -> None:
+        index = self.rows.index(row) + 1 if row is not None else 0
+        try:
+            start_ms = parse_time(row.end.get()) if row is not None else 0
+            end_ms = parse_time(self.rows[index].start.get()) if index < len(self.rows) else start_ms
+        except ValueError:
+            messagebox.showerror("Add segment", "Enter valid times before adding a segment.", parent=self)
+            return
+        chapter = Chapter("New segment", start_ms / 1000, end_ms / 1000)
+        new_row = ChapterRow(
+            chapter, tk.StringVar(master=self, value=format_time(start_ms)),
+            tk.StringVar(master=self, value=format_time(end_ms)),
+            tk.BooleanVar(master=self, value=False),
+        )
+        for widget in self.body.winfo_children():
+            number = int(widget.grid_info()["row"])
+            if number >= index + 1:
+                widget.grid_configure(row=number + 1)
+        self.rows.insert(index, new_row)
+        self._add_row_widgets(index + 1, new_row)
+        self.selected.insert(index, self.selected.pop())
+        self._row_inserted(index)
+        self._segments_changed()
+
+    def _row_removed(self, index: int) -> None:
+        pass
+
+    def _row_inserted(self, index: int) -> None:
+        pass
+
+    def _segments_changed(self) -> None:
+        self._update_locks()
+        self._selection_changed()
+        for widget in self.body.winfo_children():
+            widget.bind("<MouseWheel>", self._scroll)
+        for index, row in enumerate(self.rows):
+            row.chapter = replace(row.chapter, title=self._chapter_title(index, row))
+        self.on_change([row.chapter for row in self.rows])
 
     def _validate_times(self, start: float, end: float, number: int) -> None:
         if not math.isfinite(start) or not math.isfinite(end) or not 0 <= start < end <= self._maximum:

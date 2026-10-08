@@ -46,6 +46,12 @@ Times use "HH:MM:SS:CC". Arrows change seconds, Shift changes minutes,
 Ctrl changes tenths of a second. "Lock" links adjacent chapter boundaries.
 Extended modes keep the original file and show FFmpeg processing logs.
 
+In both Extended modes, "−" removes a segment and "+" inserts one after it,
+from its end to the next segment's start. Adding after the last segment creates
+a zero-length range; adjust it before downloading. Other time ranges stay unchanged.
+The "−" button in the "Segments" heading removes selected rows; "All" selects all.
+In "Extended", chapter names are editable and used in output filenames.
+
 ## Audio tags and covers
 
 The "+" button in the "Tag" heading adds an optional tag column:
@@ -53,17 +59,14 @@ Artist URL (WOAR), Audio URL (WOAF), Genre, Composer, Comment, Disc, BPM,
 Copyright, Publisher or Language. Use "…" to apply a value to selected rows.
 Additional tags are written to MP3; an empty field removes the corresponding tag.
 
-In "Extended Audio", "−" removes a segment and "+" inserts one after it,
-from its end to the next segment's start. Adding after the last segment creates
-a zero-length range; adjust it before downloading. Other tracks are not renumbered.
-The "−" button in the "Segments" heading removes all selected rows.
+Adding or removing segments does not change existing Track numbers.
 
 Edit Title, Artist, Track, Album, Year and Album Artist.
 Track is displayed and tagged as "01"; Year is four digits or empty.
 Filenames are "01 - Artist - Title", or "01 - Title" when Artist is empty.
 
 Select rows on the left, or use "All". The "…" button beside a tag heading
-applies one value to selected rows. Selection affects editing only;
+applies one value to selected rows. Selection affects editing and deletion;
 all segments are processed when downloading.
 
 Cover accepts "<original>", a JPEG/PNG/GIF/BMP path, or an empty value.
